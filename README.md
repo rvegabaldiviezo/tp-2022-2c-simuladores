@@ -27,7 +27,8 @@ Debemos Incluir:
 
 | Apellido y Nombre | GitHub user | Módulos a cargo |
 |-------------------|-------------|-----------------|
-| BRUN, Maximiliano | [@BMaxi6](https://github.com/BMaxi6) | Sindicato |
-| COLLAZO, Cecilia  | [@cecicollazo](https://github.com/cecicollazo) | App |
-| OVIEDO, Facundo   | [@foviedo](https://github.com/foviedo) | Comanda |
-| RANIERI, Agustín  | [@RaniAgus](https://github.com/RaniAgus) | Restaurante / App | 
+| BERGES, Santiago   | [@sberges](https://www.github.com/sberges) | ... |
+| FRIED, Alan  | [@alu654](https://www.github.com/alu654) | ... |
+| RAMOS, Julieta | [@julietaramos](https://www.github.com/julietaramos) | ... |
+| ROBLES, Lautaro  | [@LautaroRobles](https://www.github.com/LautaroRobles) | ... / ... | 
+| VEGA B., Ramon Angel  | [@rvegabaldiviezo](https://www.github.com/rvegabaldiviezo) | ... / ... | 
