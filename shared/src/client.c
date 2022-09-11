@@ -124,3 +124,8 @@ void liberar_conexion(int socket_cliente)
 {
 	close(socket_cliente);
 }
+
+
+void mensaje(char* mensaje){
+	puts(mensaje);
+}
