@@ -2,7 +2,9 @@
 
 | DESCRIPCION   |
 |------------------|
-| El objetivo del trabajo práctico consiste en desarrollar una solución que permita la simulación de un sistema distribuido, donde planificamos los procesos, resolvemos las  peticiones al sistema y administramos la memoria. Esta simulacion nos permite aplicar de forma práctica los conceptos teóricos dictados en la cursada. | 
+| El objetivo del trabajo práctico consiste en desarrollar una solución que permita la simulación de un sistema distribuido, donde planificamos los procesos, resolvemos las  peticiones al sistema y administramos la memoria. Esta simulacion nos permite aplicar de forma práctica los conceptos teóricos dictados en la cursada. |
+ 
+![Arquitectura del sistema](/shared/arquitecturaDelTP.png.png) 
 
 |         TEMAS               |          LINK                   |
 |------------------------|--------------------|   
