@@ -1,6 +1,14 @@
 {
   "files.associations": {
     "*.vue": "vue",
-    "estructuras.h": "c"
-  }
+    "estructuras.h": "c",
+    "log.h": "c",
+    "string.h": "c",
+    "parser.h": "c",
+    "dictionary.h": "c",
+    "structures.h": "c",
+    "stdlib.h": "c",
+    "panel.h": "c"
+  },
+  "C_Cpp.errorSquiggles": "Disabled"
 }

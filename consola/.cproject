@@ -35,8 +35,9 @@
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.exe.debug.476154201" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.debug">
 								<option id="gnu.c.link.option.libs.416144302" name="Libraries (-l)" superClass="gnu.c.link.option.libs" useByScannerDiscovery="false" valueType="libs">
 									<listOptionValue builtIn="false" value="shared"/>
+									<listOptionValue builtIn="false" value="commons"/>
 								</option>
-								<option id="gnu.c.link.option.paths.485189606" superClass="gnu.c.link.option.paths" useByScannerDiscovery="false" valueType="libPaths">
+								<option id="gnu.c.link.option.paths.485189606" name="Library search path (-L)" superClass="gnu.c.link.option.paths" useByScannerDiscovery="false" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/shared/Debug}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.linker.input.1928949377" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
