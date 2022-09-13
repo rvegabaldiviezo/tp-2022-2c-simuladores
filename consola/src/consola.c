@@ -19,49 +19,37 @@
 
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <commons/log.h>
+#include <structures.h>
 #include "parser.h"
 
 t_log* logger;
 
-void init() {
-	logger = log_create("consola.log", "consola", true, LOG_LEVEL_INFO);
-}
-void free_resources() {
-	log_destroy(logger);
-}
-void exit_error(const char* message) {
-	log_error(logger, message);
-	free_resources();
-	exit(EXIT_FAILURE);
-}
-void parse_instructions(const char* path)
-{
-	if(path == NULL) {
-		exit_error("Debe proveer el path para el archivo de instrucciones como segundo argumento\n");
-	}
-
-	FILE * instructions_stream = fopen(path, "r");
-
-	log_info(logger, "Se abrio el archivo de instrucciones");
-
-	if(instructions_stream == NULL) {
-		exit_error("No se pudo abrir el archivo de instrucciones");
-	}
-
-	parse(logger, instructions_stream);
-	
-	fclose(instructions_stream);
+void destroy_instruction(void* instruction) {
+	list_destroy(((t_instruction*)instruction)->parameters);
 }
 
 int main(int argc, const char **argv) {
 
-	init();
+	logger = log_create("consola.log", "consola", true, LOG_LEVEL_INFO);
 
-	parse_instructions(argv[2]);
+	// Obtengo las instrucciones
+	t_list* instructions = parse(logger, argv[2]);
+
+	// Las muestro por pantall (eliminar luego esto)
+	for(int i = 0; i < list_size(instructions); i++) {
+		t_instruction* inst = list_get(instructions, i);
+		
+		log_info(logger, "Instruction(%i, params: %i)", inst->operator, list_size(inst->parameters));
+	}
 
 	log_info(logger, "Cerrando consola...");
 
-	free_resources();
+	// Hay que liberar la memoria de lo que se reservo
+	list_destroy_and_destroy_elements(instructions, &destroy_instruction);
+	log_destroy(logger);
 
 	return EXIT_SUCCESS;
 }

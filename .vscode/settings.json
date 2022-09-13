@@ -8,7 +8,9 @@
     "dictionary.h": "c",
     "structures.h": "c",
     "stdlib.h": "c",
-    "panel.h": "c"
+    "panel.h": "c",
+    "list.h": "c",
+    "stdio.h": "c"
   },
   "C_Cpp.errorSquiggles": "Disabled"
 }

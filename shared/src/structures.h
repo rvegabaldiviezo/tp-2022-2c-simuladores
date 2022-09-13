@@ -1,3 +1,5 @@
+#include <commons/collections/list.h>
+
 typedef enum {
 	SET,
 	ADD,
@@ -7,8 +9,15 @@ typedef enum {
 	EXIT
 } t_operator;
 
+typedef enum {
+	AX,
+	BX,
+	CX,
+	DX,
+	DISCO
+} t_parameter;
+
 typedef struct {
 	t_operator operator;
-	int param1;
-	int param2;
+	t_list* parameters;
 } t_instruction;
