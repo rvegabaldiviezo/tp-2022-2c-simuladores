@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <commons/log.h>
 #include <commons/collections/list.h>
-#include <structures.h>
+#include <shared/structures.h>
 #include <string.h>
 #include "parser.h"
 

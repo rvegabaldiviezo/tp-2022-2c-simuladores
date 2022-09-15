@@ -9,7 +9,7 @@
 
  PARA EJECUTAR Y PROBAR LA CONSOLA:
  1) buildear el proyecto de consola
- 2) ubicarse con una terminal en /consola/Debug
+ 2) ubicarse con una terminal: cd ./consola/Debug
  3) ejecutar el siguiente comando: ./consola arg1 ../../config/instructions/program1.txt
 
  EXPLICACION DEL COMANDO:
@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <commons/log.h>
-#include <structures.h>
+#include <shared/structures.h>
 #include "parser.h"
 
 t_log* logger;
