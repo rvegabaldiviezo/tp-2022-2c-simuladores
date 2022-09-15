@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <commons/log.h>
 #include <shared/structures.h>
+#include <shared/environment_variables.h>
 #include "parser.h"
 
 t_log* logger;
@@ -44,6 +45,8 @@ int main(int argc, const char **argv) {
 		
 		log_info(logger, "Instruction(%i, params: %i)", inst->operator, list_size(inst->parameters));
 	}
+
+	// log_info(logger, "Path: %s",IP_CONFIG_PATH);
 
 	log_info(logger, "Cerrando consola...");
 
