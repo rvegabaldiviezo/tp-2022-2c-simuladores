@@ -2,16 +2,18 @@
 #include <stdlib.h>
 #include <commons/log.h>
 #include <commons/collections/list.h>
+#include <commons/string.h>
 #include <shared/structures.h>
 #include <string.h>
+#include <ctype.h>
 #include "parser.h"
 
 // Defino estructuras estaticas que ayudan a relacionar
 // un enum con un string
 const static struct {
     const char *str;
-    t_operator op;
-} t_operator_conversion [] = {
+    t_operation op;
+} t_operation_conversion [] = {
     {"SET", SET},
     {"ADD", ADD},
     {"MOV_IN", MOV_IN},
@@ -21,35 +23,50 @@ const static struct {
 };
 const static struct {
     const char *str;
-    t_parameter param;
-} t_parameter_conversion [] = {
+    t_register reg;
+} t_register_conversion [] = {
     {"AX", AX},
     {"BX", BX},
     {"CX", CX},
-    {"DX", DX},
-    {"DISCO", DISCO}
+    {"DX", DX}
 };
 
 
 // Dado un string lo transforma en su ENUM de t_operation correspondiente
 // si no encuentra el ENUM devuelve -1
-t_operator str2op(char* str)
+t_operation str_to_op(char* str)
 {
     int j;
-    for (j = 0;  j < sizeof (t_operator_conversion) / sizeof (t_operator_conversion[0]);  ++j)
-        if (!strcmp (str, t_operator_conversion[j].str))
-            return t_operator_conversion[j].op;
+    for (j = 0;  j < sizeof (t_operation_conversion) / sizeof (t_operation_conversion[0]);  ++j)
+        if (!strcmp (str, t_operation_conversion[j].str))
+            return t_operation_conversion[j].op;
     return -1;
 }
-// Dado un string lo transforma en su ENUM de t_parameter correspondiente
+// Dado un string lo transforma en su ENUM de t_register correspondiente
 // si no encuentra el ENUM devuelve -1
-t_parameter str2param(char* str)
+t_register str_to_reg(char* str)
 {
     int j;
-    for (j = 0;  j < sizeof (t_parameter_conversion) / sizeof (t_parameter_conversion[0]);  ++j)
-        if (!strcmp (str, t_parameter_conversion[j].str))
-            return t_parameter_conversion[j].param;
+    for (j = 0;  j < sizeof (t_register_conversion) / sizeof (t_register_conversion[0]);  ++j)
+        if (!strcmp (str, t_register_conversion[j].str))
+            return t_register_conversion[j].reg;
     return -1;
+}
+bool is_operation(char* str) 
+{
+    return str_to_op(str) != -1;
+}
+bool is_register(char* str) 
+{
+    return str_to_reg(str) != -1;
+}
+bool is_int(char* str) 
+{
+    for (int i = 0; i < strlen(str); i++) {
+        if(!isdigit(str[i]))
+            return false;
+    }
+    return true;
 }
 
 
@@ -122,12 +139,12 @@ FILE* open_stream(t_log* logger, const char* path)
 
 	FILE * instructions_stream = fopen(path, "r");
 
-	log_info(logger, "Se abrio el archivo de instrucciones");
-
 	if(instructions_stream == NULL) {
 		log_error(logger, "No se pudo abrir el archivo de instrucciones");
         exit(EXIT_FAILURE);
 	}
+
+	log_info(logger, "Se abrio el archivo de instrucciones");
 
     return instructions_stream;
 }
@@ -151,33 +168,39 @@ t_list* parse(t_log* logger, const char* path)
 
         // la primer palabra que obtengo deberia ser siempre un operador
         char* word = next_word(stream);
-        t_operator operator = str2op(word);
-        if(operator == -1) {
-            // Is not an operator
+
+        if(!is_operation(word)) {
+            // Is not an operation
             log_error(logger, "Se esperaba un operador, pero se encontro: %s", word);
             exit(EXIT_FAILURE);
         }
-        instruction->operator = operator;
+
+        instruction->operation = str_to_op(word);
         // no me olvido de liberar la memoria de lo que ya no uso
         free(word);
 
         // las siguientes palabras entonces deben ser los parametros
         // reviso una por una las palabras hasta que me encuentro con
-        // una nueva linea O el fin del archivo
+        // una nueva linea o el fin del archivo
         while(!next_is_newline(stream) && !next_is_eof(stream)) {
             word = next_word(stream);
-            t_parameter parameter = str2param(word);
-            // un parametro puede ser alguno de los enum definidos o puede ser un
-            // numero cualquiera
-            if(parameter == -1) {
-                // la instruccion es del tipo "1" "2" "3" etc
+
+            // es un registro
+            if(is_register(word))
+            {
+                list_add(instruction->parameters, (void*)str_to_reg(word));
+            }
+            // es un entero
+            else if (is_int(word))
+            {
             	list_add(instruction->parameters, (void*)atoi(word));
             }
-            else {
-                // la instruccion es del tipo "AX" "DISCO" "BX" etc
-                list_add(instruction->parameters, (void*)parameter);
+            // es un string (generalmente nombre de un I/O "DISCO")
+            else
+            {
+                list_add(instruction->parameters, (void*)string_duplicate(word));
             }
-            // no me olvido de liberar la memoria de lo que ya no uso
+
             free(word);
         }
 

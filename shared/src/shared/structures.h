@@ -7,17 +7,16 @@ typedef enum {
 	MOV_OUT,
 	IO,
 	EXIT
-} t_operator;
+} t_operation;
 
 typedef enum {
 	AX,
 	BX,
 	CX,
 	DX,
-	DISCO
-} t_parameter;
+} t_register;
 
 typedef struct {
-	t_operator operator;
+	t_operation operation;
 	t_list* parameters;
 } t_instruction;

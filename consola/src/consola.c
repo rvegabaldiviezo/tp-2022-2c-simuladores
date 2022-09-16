@@ -10,7 +10,7 @@
  PARA EJECUTAR Y PROBAR LA CONSOLA:
  1) buildear el proyecto de consola
  2) ubicarse con una terminal: cd ./consola/Debug
- 3) ejecutar el siguiente comando: ./consola arg1 ../../config/instructions/program1.txt
+ 3) ejecutar el siguiente comando: ./consola arg1 ../../config/base/program1.txt
 
  EXPLICACION DEL COMANDO:
  * Como primer argumento se pasa la direccion del archivo de config (todavia no se usa)
@@ -43,10 +43,16 @@ int main(int argc, const char **argv) {
 	for(int i = 0; i < list_size(instructions); i++) {
 		t_instruction* inst = list_get(instructions, i);
 		
-		log_info(logger, "Instruction(%i, params: %i)", inst->operator, list_size(inst->parameters));
-	}
+		log_info(logger, "Instruction %i", inst->operation);
 
-	// log_info(logger, "Path: %s",IP_CONFIG_PATH);
+		t_list* parameters = inst->parameters;
+
+		for(int j = 0; j < list_size(parameters); j++)
+		{
+			void* param = list_get(parameters, j);
+			log_info(logger, "\tparam: %i", (int)param);
+		}
+	}
 
 	log_info(logger, "Cerrando consola...");
 
