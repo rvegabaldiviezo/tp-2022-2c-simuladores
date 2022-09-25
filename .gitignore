@@ -22,6 +22,9 @@
 *.la
 *.lo
 
+# Eclipse settings
+.settings
+
 # Logs
 *.log
 
