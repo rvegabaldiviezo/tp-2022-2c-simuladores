@@ -99,10 +99,10 @@ int start_client_module(char* module)
 
 	get_ip_port_from_module(module, ip, port);
 
-	log_info(logger, "Creo socket cliente");
-	log_info(logger, "MODULO [%s]", module);
-	log_info(logger, "IP [%s]", ip);
-	log_info(logger, "PUERTO [%s]", port);
+	log_trace(logger, "Creo socket cliente");
+	log_trace(logger, "MODULO [%s]", module);
+	log_trace(logger, "IP [%s]", ip);
+	log_trace(logger, "PUERTO [%s]", port);
 
 	int socket_client = start_client(ip, port);
 
@@ -119,10 +119,10 @@ int start_server_module(char* module)
 
 	get_ip_port_from_module(module, ip, port);
 
-	log_info(logger, "Creo socket servidor");
-	log_info(logger, "MODULO [%s]", module);
-	log_info(logger, "IP [%s]", ip);
-	log_info(logger, "PUERTO [%s]", port);
+	log_trace(logger, "Creo socket servidor");
+	log_trace(logger, "MODULO [%s]", module);
+	log_trace(logger, "IP [%s]", ip);
+	log_trace(logger, "PUERTO [%s]", port);
 
 	int socket_server = start_server(ip, port);
 

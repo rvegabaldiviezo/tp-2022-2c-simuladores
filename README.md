@@ -44,13 +44,13 @@
 ## DEPLOY
 #### Como compilar y ejecutar el proyecto
 ```bash
-bash run.sh [modulo] [argumentos]
+bash run.sh [modulo] [config]
 ```
 #### Ejemplo consola
 ```bash
-bash run.sh consola ../../config/base/consola.config ../../config/base/program1.txt
+bash run.sh consola default
 ```
 #### Ejemplo kernel
 ```bash
-bash run.sh kernel
+bash run.sh kernel default
 ```

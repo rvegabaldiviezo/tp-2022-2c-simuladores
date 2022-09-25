@@ -1,4 +1,5 @@
 MODULO=$1
+CONFIG=$2
 
 bash build.sh $MODULO
 
@@ -16,4 +17,4 @@ echo ""
 # 
 # $@ = consola arg1 arg2
 # ${@:2} = arg1 arg2
-(cd $MODULO/Debug && ./$MODULO ${@:2})
+(cd $MODULO/Debug && ./$MODULO "../../config/$CONFIG/$MODULO.config" "../../config/$CONFIG/program.txt")

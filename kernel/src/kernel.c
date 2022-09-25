@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <shared/socket.h>
+#include <shared/serialization.h>
 #include <commons/log.h>
 
 t_log* logger;
@@ -19,12 +20,16 @@ t_log* logger;
 
 int main(void) {
 
-	logger = log_create("kernel.log", "kernel", true, LOG_LEVEL_INFO);
+	logger = log_create("kernel.log", "kernel", true, LOG_LEVEL_TRACE);
 
 	puts("Modulo Kernel!!!");
 
 	int socket_server = start_server_module("KERNEL");
-	int socket_to_cpu_dispatch = start_client_module("CPU_DISPATCH");
-	int socket_to_cpu_interrupt = start_client_module("CPU_INTERRUPT");
+
+	int socket_client = accept(socket_server, NULL, NULL);
+
+	char* msg = recv_msg(socket_client);
+
+	log_trace(logger, "Msg: %s", msg);
 
 }

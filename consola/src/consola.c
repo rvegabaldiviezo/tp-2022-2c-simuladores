@@ -23,6 +23,7 @@ bash run.sh consola ../../config/base/consola.config ../../config/base/program1.
 #include <commons/log.h>
 #include <commons/config.h>
 #include <shared/structures.h>
+#include <shared/serialization.h>
 #include <shared/socket.h>
 #include <shared/environment_variables.h>
 #include "parser.h"
@@ -39,7 +40,7 @@ int main(int argc, char **argv) {
 	char* consola_config_path = argv[1];
 	char* program_path = argv[2];
 
-	logger = log_create("consola.log", "consola", true, LOG_LEVEL_INFO);
+	logger = log_create("consola.log", "consola", true, LOG_LEVEL_TRACE);
 	// Obtengo la config de consola
 	consola_config = config_create(consola_config_path);
 
@@ -55,7 +56,7 @@ int main(int argc, char **argv) {
 	for(int i = 0; i < list_size(instructions); i++) {
 		t_instruction* inst = list_get(instructions, i);
 		
-		log_info(logger, "Instruction %i", inst->operation);
+		log_trace(logger, "Instruction %i", inst->operation);
 
 		t_list* parameters = inst->parameters;
 
@@ -67,6 +68,8 @@ int main(int argc, char **argv) {
 	}
 
 	int socket_kernel = start_client_module("KERNEL");
+
+	send_msg("asd1", socket_kernel);
 
 	log_info(logger, "Cerrando consola...");
 
