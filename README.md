@@ -40,3 +40,17 @@
 |       TP             |     LINK          |
 |----------------------|-------------------|
 | Gran Ejemplo de Creación de Kernels | [GECK](https://docs.google.com/document/d/1xYmkJXRRddM51fQZfxr3CEuhNtFCWe5YU7hhvsUnTtg/edit)|
+
+## DEPLOY
+#### Como compilar y ejecutar el proyecto
+```bash
+bash run.sh [modulo] [argumentos]
+```
+#### Ejemplo consola
+```bash
+bash run.sh consola ../../config/base/consola.config ../../config/base/program1.txt
+```
+#### Ejemplo kernel
+```bash
+bash run.sh kernel
+```

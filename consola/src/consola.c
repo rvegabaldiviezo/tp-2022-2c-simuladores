@@ -22,11 +22,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <commons/log.h>
+#include <commons/config.h>
 #include <shared/structures.h>
+#include <shared/connection.h>
 #include <shared/environment_variables.h>
 #include "parser.h"
 
 t_log* logger;
+t_config* consola_config;
+t_config* ip_config;
 
 void destroy_instruction(void* instruction) {
 	list_destroy(((t_instruction*)instruction)->parameters);
@@ -34,10 +38,20 @@ void destroy_instruction(void* instruction) {
 
 int main(int argc, const char **argv) {
 
+	char* consola_config_path = argv[1];
+	char* program_path = argv[2];
+
 	logger = log_create("consola.log", "consola", true, LOG_LEVEL_INFO);
 
+	int socket = start_client("0.0.0.0", "8000");
+	send_msg("Hola", socket);
+
+
+	//ip_config = config_create(IP_CONFIG_PATH);
+	//consola_config = config_create(consola_config_path);
+
 	// Obtengo las instrucciones
-	t_list* instructions = parse(logger, argv[2]);
+	t_list* instructions = parse(logger, program_path);
 
 	// Las muestro por pantall (eliminar luego esto)
 	for(int i = 0; i < list_size(instructions); i++) {
@@ -59,6 +73,8 @@ int main(int argc, const char **argv) {
 	// Hay que liberar la memoria de lo que se reservo
 	list_destroy_and_destroy_elements(instructions, &destroy_instruction);
 	log_destroy(logger);
+	//config_destroy(ip_config);
+	//config_destroy(consola_config);
 
 	return EXIT_SUCCESS;
 }
