@@ -99,7 +99,10 @@ int start_client_module(char* module)
 
 	get_ip_port_from_module(module, ip, port);
 
-	log_info(logger, "Creo socket cliente al modulo [%s]\nIP [%s]\nPUERTO [%s]\n", module, ip, port);
+	log_info(logger, "Creo socket cliente");
+	log_info(logger, "MODULO [%s]", module);
+	log_info(logger, "IP [%s]", ip);
+	log_info(logger, "PUERTO [%s]", port);
 
 	int socket_client = start_client(ip, port);
 
@@ -116,7 +119,10 @@ int start_server_module(char* module)
 
 	get_ip_port_from_module(module, ip, port);
 
-	log_info(logger, "Creo socket servidor del modulo [%s]\nIP [%s]\nPUERTO [%s]\n", module, ip, port);
+	log_info(logger, "Creo socket servidor");
+	log_info(logger, "MODULO [%s]", module);
+	log_info(logger, "IP [%s]", ip);
+	log_info(logger, "PUERTO [%s]", port);
 
 	int socket_server = start_server(ip, port);
 

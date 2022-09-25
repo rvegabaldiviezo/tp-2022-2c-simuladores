@@ -12,8 +12,14 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <shared/socket.h>
+#include <commons/log.h>
+
+t_log* logger;
+
 
 int main(void) {
+
+	logger = log_create("kernel.log", "kernel", true, LOG_LEVEL_INFO);
 
 	puts("Modulo Kernel!!!");
 
