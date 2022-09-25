@@ -9,7 +9,7 @@
 
  PARA EJECUTAR Y PROBAR LA CONSOLA:
  * ejecutar en la raiz del proyecto:
- bash run.sh consola ../../config/base/consola.config ../../config/base/program1.txt
+bash run.sh consola ../../config/base/consola.config ../../config/base/program1.txt
 
  EXPLICACION DEL COMANDO:
  * Como primer argumento se pasa la direccion del archivo de config (todavia no se usa)
@@ -29,23 +29,27 @@
 
 t_log* logger;
 t_config* consola_config;
-t_config* ip_config;
 
 void destroy_instruction(void* instruction) {
 	list_destroy(((t_instruction*)instruction)->parameters);
 }
 
-int main(int argc, const char **argv) {
+int main(int argc, char **argv) {
 
 	char* consola_config_path = argv[1];
 	char* program_path = argv[2];
 
 	logger = log_create("consola.log", "consola", true, LOG_LEVEL_INFO);
+	// Obtengo la config de consola
+	consola_config = config_create(consola_config_path);
 
-	//consola_config = config_create(consola_config_path);
+	if(consola_config == NULL) {
+		log_error(logger, "No se pudo abrir la config de consola");
+        exit(EXIT_FAILURE);
+	}
 
 	// Obtengo las instrucciones
-	t_list* instructions = parse(logger, program_path);
+	t_list* instructions = parse(program_path);
 
 	// Las muestro por pantall (eliminar luego esto)
 	for(int i = 0; i < list_size(instructions); i++) {

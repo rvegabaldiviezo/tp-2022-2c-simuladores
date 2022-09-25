@@ -10,6 +10,8 @@
 #include "environment_variables.h"
 #include "socket.h"
 
+extern t_log* logger;
+
 int start_client(char* ip, char* port)
 {
 	struct addrinfo hints, *server_info;
@@ -97,7 +99,7 @@ int start_client_module(char* module)
 
 	get_ip_port_from_module(module, ip, port);
 
-	printf("Creo socket cliente al modulo [%s]\nIP [%s]\nPUERTO [%s]\n", module, ip, port);
+	log_info(logger, "Creo socket cliente al modulo [%s]\nIP [%s]\nPUERTO [%s]\n", module, ip, port);
 
 	int socket_client = start_client(ip, port);
 
@@ -114,7 +116,7 @@ int start_server_module(char* module)
 
 	get_ip_port_from_module(module, ip, port);
 
-	printf("Creo socket servidor del modulo [%s]\nIP [%s]\nPUERTO [%s]\n", module, ip, port);
+	log_info(logger, "Creo socket servidor del modulo [%s]\nIP [%s]\nPUERTO [%s]\n", module, ip, port);
 
 	int socket_server = start_server(ip, port);
 

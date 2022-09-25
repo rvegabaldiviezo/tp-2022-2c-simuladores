@@ -8,6 +8,8 @@
 #include <ctype.h>
 #include "parser.h"
 
+extern t_log* logger;
+
 // Defino estructuras estaticas que ayudan a relacionar
 // un enum con un string
 const static struct {
@@ -130,7 +132,7 @@ bool next_is_eof(FILE* stream)
 }
 
 // Abre un archivo dado un path, devuelve el stream del archivo
-FILE* open_stream(t_log* logger, const char* path)
+FILE* open_stream(const char* path)
 {
 	if(path == NULL) {
         log_error(logger, "Debe proveer el path para el archivo de instrucciones como segundo argumento");
@@ -152,10 +154,10 @@ FILE* open_stream(t_log* logger, const char* path)
 // Crea una lista de instrucciones dada la direccion de un archivo
 // 
 // IMPORTANTE: Hay que liberar la memoria de cada instruccion
-t_list* parse(t_log* logger, const char* path)
+t_list* parse(const char* path)
 {
     // abro el archivo
-    FILE* stream = open_stream(logger, path);
+    FILE* stream = open_stream(path);
 
     // inicializo el listado de instrucciones que voy a devolver
     t_list* instructions = list_create();
