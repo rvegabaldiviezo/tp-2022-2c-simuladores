@@ -10,11 +10,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <client.h>
 
 int main(void) {
-	//puts("!!! CONSOLA !!!"); /* prints !!!Hello World!!! */
-	mensaje("SOY CPU");
+	puts("!!! CPU !!!"); /* prints !!!Hello World!!! */
 	return EXIT_SUCCESS;
 }
 

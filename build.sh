@@ -1,3 +1,11 @@
+MODULO=$1
+
+echo ""
+echo "========================================================"
+echo "============ COMIENZO INSTALACION DE SHARED ============"
+echo "========================================================"
+echo ""
+
 # Compilar los shared
 (cd shared/Debug && make clean && make all)
 
@@ -18,11 +26,24 @@ sudo cp --parents -u $H_SRCS /usr/include
 )
 echo "Instalo los .h de shared"
 
+echo ""
+echo "========================================================"
 echo "=========== INSTALACION DE SHARED COMPLETADA ==========="
+echo "========================================================"
+echo ""
 
-# Compilar modulos...
+# Compilar modulo que se pasa...
 
-(cd consola/Debug && make clean && make all)
-(cd kernel/Debug && make clean && make all)
-#(cd cpu/Debug && make clean && make all)
-#(cd memoria/Debug && make clean && make all)
+echo ""
+echo "========================================================"
+echo "=========== COMIENZO COMPILACION DE [$MODULO] ==========="
+echo "========================================================"
+echo ""
+
+(cd $MODULO/Debug && make clean && make all)
+
+echo ""
+echo "========================================================"
+echo "============= MODULO [$MODULO] COMPILADO ============="
+echo "========================================================"
+echo ""

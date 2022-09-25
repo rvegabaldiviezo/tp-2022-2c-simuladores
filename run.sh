@@ -1,10 +1,11 @@
 MODULO=$1
 
-bash build.sh
+bash build.sh $MODULO
 
-echo "======================================="
-echo "=============EJECUTANDO [$MODULO]============"
-echo "======================================="
+echo ""
+echo "========================================================"
+echo "========== COMIENZO EJECUCION DE [$MODULO] =========="
+echo "========================================================"
 echo ""
 
 # Ejecuto el modulo pasado por parametro y pasandole todos sus parametros que se
