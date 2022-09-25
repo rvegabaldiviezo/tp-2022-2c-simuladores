@@ -58,7 +58,7 @@ Mkfile.old
 dkms.conf
 
 # No subimos los ejecutables de los modulos
-*kernel
-*cpu
-*consola
-*memoria
+*/Debug/kernel
+*/Debug/cpu
+*/Debug/consola
+*/Debug/memoria
