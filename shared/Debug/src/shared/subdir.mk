@@ -4,13 +4,16 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../src/shared/connection.c 
+../src/shared/serialization.c \
+../src/shared/socket.c 
 
 OBJS += \
-./src/shared/connection.o 
+./src/shared/serialization.o \
+./src/shared/socket.o 
 
 C_DEPS += \
-./src/shared/connection.d 
+./src/shared/serialization.d \
+./src/shared/socket.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

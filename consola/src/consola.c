@@ -8,9 +8,8 @@
  ============================================================================
 
  PARA EJECUTAR Y PROBAR LA CONSOLA:
- 1) buildear el proyecto de consola
- 2) ubicarse con una terminal: cd ./consola/Debug
- 3) ejecutar el siguiente comando: ./consola arg1 ../../config/base/program1.txt
+ * ejecutar en la raiz del proyecto:
+ bash run.sh consola ../../config/base/consola.config ../../config/base/program1.txt
 
  EXPLICACION DEL COMANDO:
  * Como primer argumento se pasa la direccion del archivo de config (todavia no se usa)
@@ -24,7 +23,7 @@
 #include <commons/log.h>
 #include <commons/config.h>
 #include <shared/structures.h>
-#include <shared/connection.h>
+#include <shared/socket.h>
 #include <shared/environment_variables.h>
 #include "parser.h"
 
@@ -43,11 +42,6 @@ int main(int argc, const char **argv) {
 
 	logger = log_create("consola.log", "consola", true, LOG_LEVEL_INFO);
 
-	int socket = start_client("0.0.0.0", "8000");
-	send_msg("Hola", socket);
-
-
-	//ip_config = config_create(IP_CONFIG_PATH);
 	//consola_config = config_create(consola_config_path);
 
 	// Obtengo las instrucciones
@@ -67,6 +61,8 @@ int main(int argc, const char **argv) {
 			log_info(logger, "\tparam: %i", (int)param);
 		}
 	}
+
+	int socket_kernel = start_client_module("KERNEL");
 
 	log_info(logger, "Cerrando consola...");
 

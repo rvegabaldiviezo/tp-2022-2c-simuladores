@@ -10,7 +10,11 @@
     "stdlib.h": "c",
     "panel.h": "c",
     "list.h": "c",
-    "stdio.h": "c"
+    "stdio.h": "c",
+    "connection.h": "c",
+    "environment_variables.h": "c",
+    "config.h": "c",
+    "socket.h": "c"
   },
   "C_Cpp.errorSquiggles": "Disabled"
 }

@@ -1,13 +1,14 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<signal.h>
-#include<unistd.h>
-#include<sys/socket.h>
-#include<netdb.h>
-#include<string.h>
-#include<commons/log.h>
-
-#include "connection.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <unistd.h>
+#include <netdb.h>
+#include <string.h>
+#include <commons/log.h>
+#include <commons/config.h>
+#include <commons/string.h>
+#include "environment_variables.h"
+#include "socket.h"
 
 int start_client(char* ip, char* port)
 {
@@ -68,17 +69,57 @@ int start_server(char* ip, char* port) {
 	return socket_servidor;
 }
 
-void send_msg(char* msg, int socket)
+void get_ip_port_from_module(const char* module, char* ip, char* port)
 {
-    int size = sizeof(char) * 5;
-	void* magic = malloc(size);
-    memcpy(magic, msg, size);
-    send(socket, msg, size, 0);
-    free(magic);
+	t_config* config = config_create(IP_CONFIG_PATH);
+
+	if(config == NULL) {
+		perror("No se pudo abrir la config");
+		return;
+	}
+
+	char* config_ip_key = string_from_format("%s_IP", module);
+	char* config_port_key = string_from_format("%s_PUERTO", module);
+
+	strcpy(ip, config_get_string_value(config, config_ip_key));
+	strcpy(port, config_get_string_value(config, config_port_key));
+
+	free(config_ip_key);
+	free(config_port_key);
+
+	config_destroy(config);
 }
-char* recv_msg(int socket)
+
+int start_client_module(char* module)
 {
-    char* msg = malloc(sizeof(char) * 5);
-    recv(socket, msg, sizeof(char) * 5, 0);
-    return msg;
+	char* ip = malloc(sizeof(char) * 20);
+	char* port = malloc(sizeof(char) * 20);
+
+	get_ip_port_from_module(module, ip, port);
+
+	printf("Creo socket cliente al modulo [%s]\nIP [%s]\nPUERTO [%s]\n", module, ip, port);
+
+	int socket_client = start_client(ip, port);
+
+	free(ip);
+	free(port);
+
+	return socket_client;
+}
+
+int start_server_module(char* module)
+{
+	char* ip = malloc(sizeof(char) * 20);
+	char* port = malloc(sizeof(char) * 20);
+
+	get_ip_port_from_module(module, ip, port);
+
+	printf("Creo socket servidor del modulo [%s]\nIP [%s]\nPUERTO [%s]\n", module, ip, port);
+
+	int socket_server = start_server(ip, port);
+
+	free(ip);
+	free(port);
+
+	return socket_server;
 }

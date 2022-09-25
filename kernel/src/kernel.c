@@ -11,20 +11,14 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <stdlib.h>
-#include <shared/connection.h>
+#include <shared/socket.h>
 
 int main(void) {
 
-	int socket_server = start_server("0.0.0.0", "8000");
+	puts("Modulo Kernel!!!");
 
-	puts("Esperando...");
-	int socket_client = accept(socket_server, NULL, NULL);
-	puts("Llego un cliente");
+	int socket_server = start_server_module("KERNEL");
+	int socket_to_cpu_dispatch = start_client_module("CPU_DISPATCH");
+	int socket_to_cpu_interrupt = start_client_module("CPU_INTERRUPT");
 
-	char* msg = recv_msg(socket_client);
-	printf("Recibi mensaje: %s", msg);
-	free(msg);
-
-
-	return EXIT_SUCCESS;
 }
