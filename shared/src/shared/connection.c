@@ -74,7 +74,7 @@ void send_msg(char* msg, int socket)
 	void* magic = malloc(size);
     memcpy(magic, msg, size);
     send(socket, msg, size, 0);
-    free(msg);
+    free(magic);
 }
 char* recv_msg(int socket)
 {
