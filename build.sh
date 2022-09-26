@@ -1,22 +1,29 @@
 MODULO=$1
 
-echo ""
-echo "========================================================"
-echo "============ COMIENZO INSTALACION DE SHARED ============"
-echo "========================================================"
-echo ""
+CYAN='\033[0;36m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+echo -e ""
+echo -e "========================================================"
+echo -e "============ COMIENZO INSTALACION DE ${CYAN}shared${NC} ============"
+echo -e "========================================================"
+echo -e ""
 
 # Compilar los shared
 (cd shared/Debug && make clean && make all)
 
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Fallo la compilacion de las shared${NC}"
+    exit 1
+fi
+
 # Desinstalar shared del sistema
 sudo rm -f /usr/lib/libshared.so
 sudo rm -rf /usr/include/shared
-echo "Desinstalo shared del sistema"
 
 # Instalo libshared.so
 sudo cp -u shared/Debug/libshared.so /usr/lib
-echo "Instalo libshared.so"
 
 # Instalo los .h de shared
 (
@@ -24,26 +31,26 @@ cd shared/src &&
 H_SRCS=$(find . -iname "*.h" | tr '\n' ' ') &&
 sudo cp --parents -u $H_SRCS /usr/include
 )
-echo "Instalo los .h de shared"
+echo -e "Instalo los .h de shared"
 
-echo ""
-echo "========================================================"
-echo "=========== INSTALACION DE SHARED COMPLETADA ==========="
-echo "========================================================"
-echo ""
+echo -e ""
+echo -e "--------{ INSTALACION DE ${CYAN}shared${NC} FINALIZADA }----------"
+echo -e ""
 
 # Compilar modulo que se pasa...
 
-echo ""
-echo "========================================================"
-echo "=========== COMIENZO COMPILACION DE [$MODULO] ==========="
-echo "========================================================"
-echo ""
+echo -e ""
+echo -e "========================================================"
+echo -e "=========== COMIENZO COMPILACION DE ${CYAN}$MODULO${NC} ==========="
+echo -e "========================================================"
+echo -e ""
 
 (cd $MODULO/Debug && make clean && make all)
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Fallo la compilacion del modulo $MODULO${NC}"
+    exit 1
+fi
 
-echo ""
-echo "========================================================"
-echo "============= MODULO [$MODULO] COMPILADO ============="
-echo "========================================================"
-echo ""
+echo -e ""
+echo -e "--------------{ MODULO ${CYAN}$MODULO${NC} COMPILADO }--------------"
+echo -e ""
