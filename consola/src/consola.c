@@ -35,6 +35,28 @@ void destroy_instruction(void* instruction) {
 	list_destroy(((t_instruction*)instruction)->parameters);
 }
 
+void log_instructions(t_list* instructions)
+{
+	// Las muestro por pantall (eliminar luego esto)
+	for(int i = 0; i < list_size(instructions); i++) {
+		t_instruction* inst = list_get(instructions, i);
+
+		log_trace(logger, "Instruction %i", inst->instruction);
+
+		t_list* parameters = inst->parameters;
+
+		for(int j = 0; j < list_size(parameters); j++)
+		{
+			t_parameter* param = (t_parameter*)list_get(parameters, j);
+
+			if(param->is_string)
+				log_trace(logger, "\tparam: %s", (char*)param->parameter);
+			else
+				log_trace(logger, "\tparam: %i", (int)param->parameter);
+		}
+	}
+}
+
 int main(int argc, char **argv) {
 
 	char* consola_config_path = argv[1];
@@ -52,30 +74,13 @@ int main(int argc, char **argv) {
 	// Obtengo las instrucciones
 	t_list* instructions = parse(program_path);
 
-	// Las muestro por pantall (eliminar luego esto)
-	for(int i = 0; i < list_size(instructions); i++) {
-		t_instruction* inst = list_get(instructions, i);
-		
-		log_trace(logger, "Instruction %i", inst->instruction);
-
-		t_list* parameters = inst->parameters;
-
-		for(int j = 0; j < list_size(parameters); j++)
-		{
-			t_parameter* param = (t_parameter*)list_get(parameters, j);
-
-			if(param->is_string)
-				log_trace(logger, "\tparam: %s", (char*)param->parameter);
-			else
-				log_trace(logger, "\tparam: %i", (int)param->parameter);
-		}
-	}
-
+	// Envio las instrucciones al kernel
 	int socket_kernel = start_client_module("KERNEL");
+	send_string(socket_kernel, "Como le va, le voy a enviar unas instrucciones");
+	send_instructions(socket_kernel, instructions);
 
-	send_msg("asd1", socket_kernel);
-
-	log_info(logger, "Cerrando consola...");
+	log_trace(logger, "Envie a kernel las siguientes instrucciones");
+	log_instructions(instructions);
 
 	// Hay que liberar la memoria de lo que se reservo
 	list_destroy_and_destroy_elements(instructions, &destroy_instruction);
@@ -84,3 +89,4 @@ int main(int argc, char **argv) {
 
 	return EXIT_SUCCESS;
 }
+
