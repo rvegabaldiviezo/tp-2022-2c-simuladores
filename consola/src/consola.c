@@ -56,14 +56,18 @@ int main(int argc, char **argv) {
 	for(int i = 0; i < list_size(instructions); i++) {
 		t_instruction* inst = list_get(instructions, i);
 		
-		log_trace(logger, "Instruction %i", inst->operation);
+		log_trace(logger, "Instruction %i", inst->instruction);
 
 		t_list* parameters = inst->parameters;
 
 		for(int j = 0; j < list_size(parameters); j++)
 		{
-			void* param = list_get(parameters, j);
-			log_info(logger, "\tparam: %i", (int)param);
+			t_parameter* param = (t_parameter*)list_get(parameters, j);
+
+			if(param->is_string)
+				log_trace(logger, "\tparam: %s", (char*)param->parameter);
+			else
+				log_trace(logger, "\tparam: %i", (int)param->parameter);
 		}
 	}
 
@@ -76,8 +80,7 @@ int main(int argc, char **argv) {
 	// Hay que liberar la memoria de lo que se reservo
 	list_destroy_and_destroy_elements(instructions, &destroy_instruction);
 	log_destroy(logger);
-	//config_destroy(ip_config);
-	//config_destroy(consola_config);
+	config_destroy(consola_config);
 
 	return EXIT_SUCCESS;
 }

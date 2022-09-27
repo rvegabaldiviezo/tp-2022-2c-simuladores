@@ -14,7 +14,8 @@
     "connection.h": "c",
     "environment_variables.h": "c",
     "config.h": "c",
-    "socket.h": "c"
+    "socket.h": "c",
+    "limits": "c"
   },
   "C_Cpp.errorSquiggles": "Disabled"
 }

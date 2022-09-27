@@ -14,7 +14,7 @@ extern t_log* logger;
 // un enum con un string
 const static struct {
     const char *str;
-    t_operation op;
+    t_instruction_type inst;
 } t_operation_conversion [] = {
     {"SET", SET},
     {"ADD", ADD},
@@ -34,14 +34,14 @@ const static struct {
 };
 
 
-// Dado un string lo transforma en su ENUM de t_operation correspondiente
+// Dado un string lo transforma en su ENUM de t_instruction_type correspondiente
 // si no encuentra el ENUM devuelve -1
-t_operation str_to_op(char* str)
+t_instruction_type str_to_inst(char* str)
 {
     int j;
     for (j = 0;  j < sizeof (t_operation_conversion) / sizeof (t_operation_conversion[0]);  ++j)
         if (!strcmp (str, t_operation_conversion[j].str))
-            return t_operation_conversion[j].op;
+            return t_operation_conversion[j].inst;
     return -1;
 }
 // Dado un string lo transforma en su ENUM de t_register correspondiente
@@ -56,7 +56,7 @@ t_register str_to_reg(char* str)
 }
 bool is_operation(char* str) 
 {
-    return str_to_op(str) != -1;
+    return str_to_inst(str) != -1;
 }
 bool is_register(char* str) 
 {
@@ -168,16 +168,16 @@ t_list* parse(const char* path)
         t_instruction* instruction = malloc(sizeof(t_instruction));
         instruction->parameters = list_create();
 
-        // la primer palabra que obtengo deberia ser siempre un operador
+        // la primer palabra que obtengo deberia ser siempre el tipo de instruccion
         char* word = next_word(stream);
 
         if(!is_operation(word)) {
-            // Is not an operation
+            // Is not an instruction
             log_error(logger, "Se esperaba un operador, pero se encontro: %s", word);
             exit(EXIT_FAILURE);
         }
 
-        instruction->operation = str_to_op(word);
+        instruction->instruction = str_to_inst(word);
         // no me olvido de liberar la memoria de lo que ya no uso
         free(word);
 
@@ -186,21 +186,28 @@ t_list* parse(const char* path)
         // una nueva linea o el fin del archivo
         while(!next_is_newline(stream) && !next_is_eof(stream)) {
             word = next_word(stream);
+            t_parameter* parameter = malloc(sizeof(t_parameter));
 
             // es un registro
             if(is_register(word))
             {
-                list_add(instruction->parameters, (void*)str_to_reg(word));
+                parameter->is_string = false;
+                parameter->parameter = (void*)str_to_reg(word);
+                list_add(instruction->parameters, (void*)parameter);
             }
             // es un entero
             else if (is_int(word))
             {
-            	list_add(instruction->parameters, (void*)atoi(word));
+                parameter->is_string = false;
+                parameter->parameter = (void*)atoi(word);
+            	list_add(instruction->parameters, (void*)parameter);
             }
-            // es un string (generalmente nombre de un I/O "DISCO")
+            // es un string (generalmente nombre de un I/O "DISCO", "MOUSE", "TECLADO")
             else
             {
-                list_add(instruction->parameters, (void*)string_duplicate(word));
+                parameter->is_string = true;
+                parameter->parameter = (void*)string_duplicate(word);
+                list_add(instruction->parameters, (void*)parameter);
             }
 
             free(word);

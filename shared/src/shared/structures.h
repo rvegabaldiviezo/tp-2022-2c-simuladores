@@ -7,7 +7,7 @@ typedef enum {
 	MOV_OUT,
 	IO,
 	EXIT
-} t_operation;
+} t_instruction_type;
 
 typedef enum {
 	AX,
@@ -17,6 +17,11 @@ typedef enum {
 } t_register;
 
 typedef struct {
-	t_operation operation;
+	bool is_string;
+	void* parameter;
+} t_parameter;
+
+typedef struct {
+	t_instruction_type instruction;
 	t_list* parameters;
 } t_instruction;
