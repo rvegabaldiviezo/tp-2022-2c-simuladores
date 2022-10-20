@@ -26,6 +26,7 @@ bash run.sh consola ../../config/base/consola.config ../../config/base/program1.
 #include <shared/serialization.h>
 #include <shared/socket.h>
 #include <shared/environment_variables.h>
+#include <shared/log_extras.h>
 #include "parser.h"
 
 t_log* logger;
@@ -33,28 +34,6 @@ t_config* consola_config;
 
 void destroy_instruction(void* instruction) {
 	list_destroy(((t_instruction*)instruction)->parameters);
-}
-
-void log_instructions(t_list* instructions)
-{
-	// Las muestro por pantall (eliminar luego esto)
-	for(int i = 0; i < list_size(instructions); i++) {
-		t_instruction* inst = list_get(instructions, i);
-
-		log_trace(logger, "Instruction %i", inst->instruction);
-
-		t_list* parameters = inst->parameters;
-
-		for(int j = 0; j < list_size(parameters); j++)
-		{
-			t_parameter* param = (t_parameter*)list_get(parameters, j);
-
-			if(param->is_string)
-				log_trace(logger, "\tparam: %s", (char*)param->parameter);
-			else
-				log_trace(logger, "\tparam: %i", (int)param->parameter);
-		}
-	}
 }
 
 int main(int argc, char **argv) {
@@ -74,15 +53,24 @@ int main(int argc, char **argv) {
 	// Obtengo las instrucciones
 	t_list* instructions = parse(program_path);
 
-	// Envio las instrucciones al kernel
 	int socket_kernel = start_client_module("KERNEL");
-	send_string(socket_kernel, "Como le va, le voy a enviar unas instrucciones");
+	// Envio las instrucciones al kernel
+	char* msg = "Como le va, le voy a enviar unas instrucciones";
+	send_string(socket_kernel, msg);
+	log_trace(logger, "Envio mensaje a Kernel: %s", msg);
 	send_instructions(socket_kernel, instructions);
 
-	log_trace(logger, "Envie a kernel las siguientes instrucciones");
-	log_instructions(instructions);
+	log_trace(logger, "Envie a kernel las instrucciones");
+	log_instructions(logger, instructions);
+
+	log_trace(logger, "Espero a que kernel que me mande el pcb...");
+	t_pcb* pcb = recv_pcb(socket_kernel);
+
+	log_trace(logger, "Recibi pcb de Kernel");
+	log_pcb(logger, pcb);
 
 	// Hay que liberar la memoria de lo que se reservo
+	free(pcb);
 	list_destroy_and_destroy_elements(instructions, &destroy_instruction);
 	log_destroy(logger);
 	config_destroy(consola_config);

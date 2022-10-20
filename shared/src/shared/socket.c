@@ -7,6 +7,8 @@
 #include <commons/log.h>
 #include <commons/config.h>
 #include <commons/string.h>
+#include "structures.h"
+#include "log_extras.h"
 #include "environment_variables.h"
 #include "socket.h"
 
@@ -99,10 +101,11 @@ int start_client_module(char* module)
 
 	get_ip_port_from_module(module, ip, port);
 
-	log_trace(logger, "Creo socket cliente");
-	log_trace(logger, "MODULO [%s]", module);
-	log_trace(logger, "IP [%s]", ip);
-	log_trace(logger, "PUERTO [%s]", port);
+	log_rectangle(logger, '=', '=', CENTER, "Creo socket cliente");
+	log_rectangle(logger, '|', ' ', LEFT, "MODULO [%s]", module);
+	log_rectangle(logger, '|', ' ', LEFT, "IP [%s]", ip);
+	log_rectangle(logger, '|', ' ', LEFT, "PUERTO [%s]", port);
+	log_rectangle(logger, '=', '=', CENTER, "");
 
 	int socket_client = start_client(ip, port);
 
@@ -119,10 +122,11 @@ int start_server_module(char* module)
 
 	get_ip_port_from_module(module, ip, port);
 
-	log_trace(logger, "Creo socket servidor");
-	log_trace(logger, "MODULO [%s]", module);
-	log_trace(logger, "IP [%s]", ip);
-	log_trace(logger, "PUERTO [%s]", port);
+	log_rectangle(logger, '=', '=', CENTER, "Creo socket servidor");
+	log_rectangle(logger, '|', ' ', LEFT, "MODULO [%s]", module);
+	log_rectangle(logger, '|', ' ', LEFT, "IP [%s]", ip);
+	log_rectangle(logger, '|', ' ', LEFT, "PUERTO [%s]", port);
+	log_rectangle(logger, '=', '=', CENTER, "");
 
 	int socket_server = start_server(ip, port);
 

@@ -16,7 +16,9 @@
     "config.h": "c",
     "socket.h": "c",
     "limits": "c",
-    "serialization.h": "c"
+    "serialization.h": "c",
+    "structures_translation.h": "c",
+    "log_extras.h": "c"
   },
   "C_Cpp.errorSquiggles": "Disabled"
 }

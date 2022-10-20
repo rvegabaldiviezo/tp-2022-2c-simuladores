@@ -1,5 +1,8 @@
 #include <commons/collections/list.h>
 
+#ifndef __STRUCTURES_H
+#define __STRUCTURES_H
+
 typedef enum {
 	SET,
 	ADD,
@@ -38,3 +41,5 @@ typedef struct {
 	double execution_time;
 	t_list* instructions;
 } t_pcb;
+
+#endif
