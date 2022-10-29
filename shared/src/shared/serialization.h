@@ -1,5 +1,5 @@
 #include <commons/collections/list.h>
-#include <shared/structures.h>
+#include "structures.h"
 
 #ifndef __SERIALIZATION_H
 #define __SERIALIZATION_H

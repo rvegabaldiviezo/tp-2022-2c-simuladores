@@ -1,5 +1,5 @@
 #include <commons/collections/list.h>
-#include <shared/structures.h>
+#include "structures.h"
 
 #ifndef __STRUCTURES_TRANSLATION_H
 #define __STRUCTURES_TRANSLATION_H

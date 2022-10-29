@@ -2,7 +2,7 @@
 #include <commons/log.h>
 #include <commons/collections/list.h>
 #include <commons/string.h>
-#include <shared/structures.h>
+#include "structures.h"
 #include "log_extras.h"
 #include "structures_translation.h"
 
