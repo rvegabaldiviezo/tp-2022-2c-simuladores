@@ -42,25 +42,25 @@
 | Gran Ejemplo de Creación de Kernels | [GECK](https://docs.google.com/document/d/1xYmkJXRRddM51fQZfxr3CEuhNtFCWe5YU7hhvsUnTtg/edit)|
 
 ## DEPLOY
-#### Como instalar las commons
+#### Primero instalar las commons ejecutando
 ```bash
-bash commons.sh
+./commons.sh
 ```
-#### Como compilar y ejecutar un modulo
+#### Luego ejecutar los modulos
 ```bash
-bash run.sh [modulo] [config]
+./run.sh [modulo] [config]
 ```
 #### Ejemplo
 ##### Prueba default
 ```bash
-bash run.sh memoria default
+./run.sh memoria default
 ```
 ```bash
-bash run.sh cpu default
+./run.sh cpu default
 ```
 ```bash
-bash run.sh kernel default
+./run.sh kernel default
 ```
 ```bash
-bash run.sh consola default
+./run.sh consola default
 ```
