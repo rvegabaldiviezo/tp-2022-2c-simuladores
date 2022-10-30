@@ -18,7 +18,9 @@
     "limits": "c",
     "serialization.h": "c",
     "structures_translation.h": "c",
-    "log_extras.h": "c"
+    "log_extras.h": "c",
+    "node.h": "c",
+    "scheduller.h": "c"
   },
   "C_Cpp.errorSquiggles": "Disabled"
 }

@@ -55,22 +55,12 @@ int main(int argc, char **argv) {
 
 	int socket_kernel = start_client_module("KERNEL");
 	// Envio las instrucciones al kernel
-	char* msg = "Como le va, le voy a enviar unas instrucciones";
-	send_string(socket_kernel, msg);
-	log_trace(logger, "Envio mensaje a Kernel: %s", msg);
 	send_instructions(socket_kernel, instructions);
 
 	log_trace(logger, "Envie a kernel las instrucciones");
 	log_instructions(logger, instructions);
 
-	log_trace(logger, "Espero a que kernel que me mande el pcb...");
-	t_pcb* pcb = recv_pcb(socket_kernel);
-
-	log_trace(logger, "Recibi pcb de Kernel");
-	log_pcb(logger, pcb);
-
 	// Hay que liberar la memoria de lo que se reservo
-	free(pcb);
 	list_destroy_and_destroy_elements(instructions, &destroy_instruction);
 	log_destroy(logger);
 	config_destroy(consola_config);

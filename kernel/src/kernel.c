@@ -11,53 +11,64 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <stdlib.h>
+#include <pthread.h>
+#include <commons/log.h>
+#include <commons/config.h>
 #include <shared/socket.h>
 #include <shared/serialization.h>
 #include <shared/structures.h>
 #include <shared/log_extras.h>
-#include <commons/log.h>
+#include "kernel.h"
+#include "scheduller.h"
 
+// Logger
 t_log* logger;
 
-void destroy_instruction(void* instruction) {
-	list_destroy(((t_instruction*)instruction)->parameters);
+// Config
+t_config* config;
+
+// Connections
+int socket_cpu_interrupt;
+int socket_cpu_dispatch;
+int socket_memoria;
+
+int main(int argc, char **argv) 
+{
+	initialize_logger(argv);
+	initialize_config(argv);
+
+	int socket_kernel = start_server_module("KERNEL");
+	while(true) {
+		// Espero hasta que se conecte una consola
+		log_trace(logger, "Esperando consola...");
+		int socket_consola = accept(socket_kernel, NULL, NULL);
+		log_trace(logger, "Conexion con consola: %i", socket_consola);
+		t_list* instructions = recv_instructions(socket_consola);
+		create_process(socket_consola, instructions);
+	}
 }
 
-int main(void) {
-
+void initialize_logger(char **argv)
+{
 	logger = log_create("kernel.log", "kernel", true, LOG_LEVEL_TRACE);
+}
 
-	int socket_server = start_server_module("KERNEL");
-	log_trace(logger, "Esperando una conexion...");
-	int socket_consola = accept(socket_server, NULL, NULL);
+void initialize_config(char **argv)
+{
+	config = config_create(argv[1]);
+	if(config == NULL) {
+		log_error(logger, "No se pudo abrir la config de kernel");
+        exit(EXIT_FAILURE);
+	}
+}
 
-	char* msg = recv_string(socket_consola);
-	log_trace(logger, "Se recibio un mensaje: %s", msg);
-
-	t_list* instructions = recv_instructions(socket_consola);
-	log_trace(logger, "Se recibieron instrucciones de consola");
-	log_instructions(logger, instructions);
-
+int process_count = 0;
+void create_process(int socket_consola, t_list* instructions)
+{
 	t_pcb* pcb = malloc(sizeof(t_pcb));
-	pcb->id = 99;
-	pcb->process_size = 69;
-	pcb->program_counter = 420;
-	pcb->page_table = 1337;
-	pcb->estimated_burst = 9.0;
+	pcb->id = ++process_count;
 	pcb->socket_consola = socket_consola;
-	pcb->start_burst = 1.23;
-	pcb->estimated_remaining_burst = 32.1;
-	pcb->execution_time = 44.4;
 	pcb->instructions = instructions;
-	log_trace(logger, "Se genero la pcb");
-	log_pcb(logger, pcb);
 
-	send_pcb(socket_consola, pcb);
-	log_trace(logger, "Se envio la pcb a consola");
-
-	// Hay que liberar la memoria
-	free(msg);
-	free(pcb);
-	list_destroy_and_destroy_elements(instructions, &destroy_instruction);
-	log_destroy(logger);
+	new_state(pcb);
 }
