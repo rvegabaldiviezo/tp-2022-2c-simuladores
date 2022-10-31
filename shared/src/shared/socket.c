@@ -34,7 +34,10 @@ int start_client(char* ip, char* port)
 						    server_info->ai_protocol);
 
 	// Ahora que tenemos el socket, vamos a conectarlo.
-	connect(socket_client, server_info->ai_addr, server_info->ai_addrlen);
+	if(connect(socket_client, server_info->ai_addr, server_info->ai_addrlen) == -1)
+	{
+		return -1;
+	}
 	// nuestros procesos ya estan conectados
 
 	freeaddrinfo(server_info);
@@ -108,6 +111,11 @@ int start_client_module(char* module)
 	log_rectangle(logger, '=', '=', CENTER, "");
 
 	int socket_client = start_client(ip, port);
+	if(socket_client == -1)
+	{
+		log_error(logger, "No se puede establecer conexion con el modulo %s, ¿No sera que falta levantarlo?", module);
+		exit(EXIT_FAILURE);
+	}
 
 	free(ip);
 	free(port);
