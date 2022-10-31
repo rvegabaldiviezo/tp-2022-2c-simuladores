@@ -7,7 +7,11 @@
 typedef enum {
     STRING,
     INSTRUCTIONS,
-    PCB
+    PCB,
+    INTERRUPTION_QUANTUM,               // Se usa para enviarlo al cpu_interrupt y se recibe por el kernel en cpu_dispatch
+    INTERRUPTION_IO,
+    INTERRUPTION_EXECUTION_FINISHED,
+    PAGE_FAULT
 } op_code;
 
 typedef struct {
