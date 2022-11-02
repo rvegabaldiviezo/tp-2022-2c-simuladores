@@ -2,6 +2,7 @@
 #include <commons/log.h>
 #include <commons/config.h>
 #include <shared/structures.h>
+#include <shared/serialization.h>
 
 // Logger
 extern t_log* logger;
