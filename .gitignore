@@ -62,3 +62,11 @@ dkms.conf
 */Debug/cpu
 */Debug/consola
 */Debug/memoria
+*/Debug/shared
+
+kernel/.gitignore
+cpu/.gitignore
+consola/.gitignore
+memoria/.gitignore
+shared/.gitignore
+
