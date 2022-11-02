@@ -9,7 +9,6 @@ RM := rm -rf
 # All of the sources participating in the build are defined here
 -include sources.mk
 -include src/shared/subdir.mk
--include subdir.mk
 -include objects.mk
 
 ifneq ($(MAKECMDGOALS),clean)
@@ -20,13 +19,27 @@ endif
 
 -include ../makefile.defs
 
+OPTIONAL_TOOL_DEPS := \
+$(wildcard ../makefile.defs) \
+$(wildcard ../makefile.init) \
+$(wildcard ../makefile.targets) \
+
+
+BUILD_ARTIFACT_NAME := shared
+BUILD_ARTIFACT_EXTENSION := so
+BUILD_ARTIFACT_PREFIX := lib
+BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
+
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: libshared.so
+all: main-build
+
+# Main-build Target
+main-build: libshared.so
 
 # Tool invocations
-libshared.so: $(OBJS) $(USER_OBJS)
+libshared.so: $(OBJS) $(USER_OBJS) makefile objects.mk $(OPTIONAL_TOOL_DEPS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C Linker'
 	gcc -shared -o "libshared.so" $(OBJS) $(USER_OBJS) $(LIBS)
@@ -35,9 +48,9 @@ libshared.so: $(OBJS) $(USER_OBJS)
 
 # Other Targets
 clean:
-	-$(RM) $(LIBRARIES)$(OBJS)$(C_DEPS) libshared.so
+	-$(RM) libshared.so
 	-@echo ' '
 
-.PHONY: all clean dependents
+.PHONY: all clean dependents main-build
 
 -include ../makefile.targets

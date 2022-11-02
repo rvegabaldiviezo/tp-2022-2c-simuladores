@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <commons/log.h>
 #include <commons/config.h>
+#include <shared/log_extras.h>
 #include <shared/structures.h>
 #include <shared/serialization.h>
 #include <shared/socket.h>
@@ -42,9 +43,12 @@ int main(int argc, char **argv) {
 	int socket_cpu_dispatch = start_server_module("CPU_DISPATCH");
 	log_trace(logger,"Esperando conexion con Kernel desde DISPATCH");
 	int socket_kernel_dispatch = accept(socket_cpu_dispatch, NULL, NULL);
-	log_trace(logger, "Conexion con kernel: %i", socket_kernel_dispatch);
-	//t_pcb* pcb = recv_pcb(socket_kernel);
-
+	log_trace(logger, "Conexion con kernel dispatch: %i", socket_kernel_dispatch);
+	t_pcb* pcb = recv_pcb(socket_kernel_dispatch);
+	pcb->interrupt_type = INT_IO;
+	log_pcb(logger, pcb);
+	send_pcb(socket_kernel_dispatch, pcb);
+	log_trace(logger, "Envio PCB modificado");
 
 	//FREE MEM
 	config_destroy(cpu_config);
@@ -57,6 +61,6 @@ void* start_interrupt(void* arg) {
 	int socket_cpu_interrupt = start_server_module("CPU_INTERRUPT");
 	log_trace(logger,"Esperando conexion con Kernel desde INTERRUPT");
 	int socket_kernel_interrupt = accept(socket_cpu_interrupt, NULL, NULL);
-	log_trace(logger, "Conexion con kernel: %i", socket_kernel_interrupt);
+	log_trace(logger, "Conexion con kernel interrupt: %i", socket_kernel_interrupt);
 
 }

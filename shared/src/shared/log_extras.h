@@ -1,5 +1,6 @@
 #include <commons/collections/list.h>
 #include <commons/log.h>
+#include "structures.h"
 
 #ifndef __LOG_EXTRAS_H
 #define __LOG_EXTRAS_H
