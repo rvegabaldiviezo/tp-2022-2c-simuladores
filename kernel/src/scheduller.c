@@ -3,6 +3,7 @@
 #include <commons/config.h>
 #include <shared/structures.h>
 #include <shared/serialization.h>
+#include <shared/log_extras.h>
 
 // Logger
 extern t_log* logger;
@@ -48,7 +49,11 @@ void execute_algorithm()
 {
     // nos fijamos que algoritmo de planificacion usamos
     // revisamos las colas correspondientes y "popeamos" un pcb de alguna de las colas
+    t_pcb* pcb = (t_pcb*)queue_pop(new_queue);
     // enviamos el pcb a la cpu por cpu_dispatch
+    send_pcb(socket_cpu_dispatch, pcb);
+    log_info(logger, "PID: %i - Estado Anterior: NEW - Estado Actual: EXECUTE", pcb->id);
+    log_pcb(logger, pcb);
 }
 
 void wait_cpu_dispatch()
@@ -58,21 +63,20 @@ void wait_cpu_dispatch()
         // Se espera a recibir el pcb de la cpu porque termino de ejecutar
         t_pcb* pcb; // Recibios el pcb de la cpu
         // verificamos que hacer (porque nos envio el pcb la cpu)
-        op_code op_code_enviado_por_cpu;
-        switch(op_code_enviado_por_cpu) {
-            case INTERRUPTION_EXECUTION_FINISHED:
+        switch(pcb->interrupt_type) {
+            case EXECUTION_FINISHED:
                 // metemos el pcb en la cola de exit
                 execute_algorithm();
                 break;
-            case INTERRUPTION_QUANTUM:
+            case INT_QUANTUM:
                 // metemos el pcb en la cola de ready
                 execute_algorithm();
                 break;
-            case INTERRUPTION_IO:
+            case INT_IO:
                 // metemos el pcb en bloqueado
                 execute_algorithm();
                 break;
-            case PAGE_FAULT:
+            case INT_PAGE_FAULT:
                 // Resolvemos el pagefault de la siguiente manera
                 /** 
                     1.- Mover al proceso al estado Bloqueado. Este estado bloqueado será independiente de todos los demás ya que solo afecta al proceso y no compromete recursos compartidos.

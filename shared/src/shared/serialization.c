@@ -196,6 +196,7 @@ void send_pcb(int socket, t_pcb* pcb)
 
     add_op_code(buffer, PCB);
     add_to_buffer(buffer, &pcb->id, sizeof(pcb->id));
+    add_to_buffer(buffer, &pcb->interrupt_type, sizeof(pcb->interrupt_type));
     add_to_buffer(buffer, &pcb->process_size, sizeof(pcb->process_size));
     add_to_buffer(buffer, &pcb->program_counter, sizeof(pcb->program_counter));
     add_to_buffer(buffer, &pcb->page_table, sizeof(pcb->page_table));
@@ -215,6 +216,7 @@ t_pcb* recv_pcb(int socket)
 
     t_pcb* pcb = malloc(sizeof(t_pcb));
     recv(socket, &pcb->id, sizeof(pcb->id), 0);
+    recv(socket, &pcb->interrupt_type, sizeof(pcb->interrupt_type), 0);
     recv(socket, &pcb->process_size, sizeof(pcb->process_size), 0);
     recv(socket, &pcb->program_counter, sizeof(pcb->program_counter), 0);
     recv(socket, &pcb->page_table, sizeof(pcb->page_table), 0);

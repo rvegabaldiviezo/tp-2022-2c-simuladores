@@ -29,8 +29,18 @@ typedef struct {
 	t_list* parameters;
 } t_instruction;
 
+// Proposicion
+typedef enum {
+    INT_QUANTUM,               // Se usa para enviarlo al cpu_interrupt y se recibe por el kernel en cpu_dispatch
+    INT_IO,
+	INT_PAGE_FAULT,
+    EXECUTION_FINISHED
+} t_interrupt_type;
+
 typedef struct {
 	int id;
+	// Agregar una nueva variable que defina razon de interrupt
+	t_interrupt_type interrupt_type;
 	unsigned int process_size;
 	unsigned int program_counter;
 	unsigned int page_table;

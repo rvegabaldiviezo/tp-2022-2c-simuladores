@@ -67,8 +67,8 @@ void initialize_config(char **argv)
 
 void initialize_sockets()
 {
-	//socket_cpu_interrupt = start_client_module("CPU_INTERRUPT");
-	//socket_cpu_dispatch = start_client_module("CPU_DISPATCH");
+	socket_cpu_interrupt = start_client_module("CPU_INTERRUPT");
+	socket_cpu_dispatch = start_client_module("CPU_DISPATCH");
 	//socket_memoria = start_client_module("MEMORIA");
 }
 
@@ -77,8 +77,11 @@ void create_process(int socket_consola, t_list* instructions)
 {
 	t_pcb* pcb = malloc(sizeof(t_pcb));
 	pcb->id = ++process_count;
+	pcb->interrupt_type = -1;
 	pcb->socket_consola = socket_consola;
 	pcb->instructions = instructions;
 
 	new_state(pcb);
+	execute_algorithm();
+	wait_cpu_dispatch();
 }

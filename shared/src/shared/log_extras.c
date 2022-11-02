@@ -81,6 +81,7 @@ void log_pcb(t_log* logger, t_pcb* pcb)
 	log_rectangle(logger, '=', '=', CENTER, "{pcb}");
 	log_rectangle(logger, '|', '-', CENTER, "");
 	log_rectangle(logger, '|', ' ', LEFT, "pcb->id: %i", pcb->id);
+	log_rectangle(logger, '|', ' ', LEFT, "pcb->interrupt_type: %s", pcb->interrupt_type == -1 ? "" : t_interrupt_type_string[pcb->interrupt_type]);
 	log_rectangle(logger, '|', ' ', LEFT, "pcb->process_size: %i", pcb->process_size);
 	log_rectangle(logger, '|', ' ', LEFT, "pcb->program_counter: %i", pcb->program_counter);
 	log_rectangle(logger, '|', ' ', LEFT, "pcb->page_table: %i", pcb->page_table);
