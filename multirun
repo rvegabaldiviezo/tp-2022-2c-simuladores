@@ -1,0 +1,45 @@
+CONFIG=$1
+MODULO1=$2
+MODULO2=$3
+MODULO3=$4
+MODULO4=$5
+
+CYAN='\033[0;36m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+if [ ! -d "config/$CONFIG" ]; then
+    CONFIG="default"
+    MODULO1=$1
+    MODULO2=$2
+    MODULO3=$3
+    MODULO4=$4
+fi
+
+if [ ! -z "$MODULO1" ]
+then
+  echo -e "Abirendo terminal para $CYAN$MODULO1$NC con config $CYAN$CONFIG$NC"
+  x-terminal-emulator -T $MODULO1 -e "echo utnso | sudo -S ./run $MODULO1 $CONFIG;bash"
+fi
+
+if [ ! -z "$MODULO2" ]
+then
+  echo -e "Abirendo terminal para $CYAN$MODULO2$NC con config $CYAN$CONFIG$NC"
+  x-terminal-emulator -T $MODULO2 -e "echo utnso | sudo -S ./run $MODULO2 $CONFIG;bash"
+fi
+
+if [ ! -z "$MODULO3" ]
+then
+  echo -e "Abirendo terminal para $CYAN$MODULO3$NC con config $CYAN$CONFIG$NC"
+  x-terminal-emulator -T $MODULO3 -e "echo utnso | sudo -S ./run $MODULO3 $CONFIG;bash"
+fi
+
+if [ ! -z "$MODULO4" ]
+then
+  echo -e "Abirendo terminal para $CYAN$MODULO4$NC con config $CYAN$CONFIG$NC"
+  x-terminal-emulator -T $MODULO4 -e "echo utnso | sudo -S ./run $MODULO4 $CONFIG;bash"
+fi
+
+#xterm -e "echo utnso | sudo -S ./run $MODULO1 $CONFIG"
+
+

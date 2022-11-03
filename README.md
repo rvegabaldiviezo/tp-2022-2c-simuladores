@@ -44,23 +44,24 @@
 ## DEPLOY
 #### Primero instalar las commons ejecutando
 ```bash
-./commons.sh
+./commons
 ```
 #### Luego ejecutar los modulos
 ```bash
-./run.sh [modulo] [config]
+./run [modulo] [config]
 ```
-#### Ejemplo
-##### Prueba default
+## TESTING
+#### Para probar muchos modulos a la vez (config es opcional)
 ```bash
-./run.sh memoria default
+./multirun [config]? [modulo1] [modulo2] [modulo3] [modulo4]
 ```
+Esto abre multiples terminales y ejecuta los modulos en el orden indicado usando la configuracion indicada (si no se pasa configuracion ejecuta los modulos con la config default)
+
+Ejemplo: Abrir **cpu** despues **kernel** y por ultimo **consola** usando la config **default**
 ```bash
-./run.sh cpu default
+./multirun cpu kernel consola
 ```
+Ejemplo: Abrir **memoria** y despues **cpu** usando la config **base1**
 ```bash
-./run.sh kernel default
-```
-```bash
-./run.sh consola default
+./multirun base1 memoria cpu
 ```
