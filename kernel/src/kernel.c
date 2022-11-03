@@ -80,6 +80,10 @@ void create_process(int socket_consola, t_list* instructions)
 	pcb->interrupt_type = -1;
 	pcb->socket_consola = socket_consola;
 	pcb->instructions = instructions;
+	pcb->registers[AX] = 0;
+	pcb->registers[BX] = 0;
+	pcb->registers[CX] = 0;
+	pcb->registers[DX] = 0;
 
 	new_state(pcb);
 	execute_algorithm();

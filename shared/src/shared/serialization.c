@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <sys/socket.h>
 #include <commons/string.h>
 #include <commons/log.h>
@@ -99,6 +100,15 @@ void add_instructions(t_buffer* buffer, t_list* instructions)
         }
     }
 }
+
+void add_registers(t_buffer* buffer, t_register* registers)
+{
+    add_to_buffer(buffer, &registers[AX], sizeof(uint32_t));
+    add_to_buffer(buffer, &registers[BX], sizeof(uint32_t));
+    add_to_buffer(buffer, &registers[CX], sizeof(uint32_t));
+    add_to_buffer(buffer, &registers[DX], sizeof(uint32_t));
+}
+
 void send_buffer(int socket, t_buffer* buffer)
 {
     send(socket, buffer->stream, buffer->size, 0);
@@ -199,6 +209,7 @@ void send_pcb(int socket, t_pcb* pcb)
     add_to_buffer(buffer, &pcb->interrupt_type, sizeof(pcb->interrupt_type));
     add_to_buffer(buffer, &pcb->process_size, sizeof(pcb->process_size));
     add_to_buffer(buffer, &pcb->program_counter, sizeof(pcb->program_counter));
+    add_registers(buffer, pcb->registers);
     add_to_buffer(buffer, &pcb->page_table, sizeof(pcb->page_table));
     add_to_buffer(buffer, &pcb->estimated_burst, sizeof(pcb->estimated_burst));
     add_to_buffer(buffer, &pcb->socket_consola, sizeof(pcb->socket_consola));
@@ -219,6 +230,10 @@ t_pcb* recv_pcb(int socket)
     recv(socket, &pcb->interrupt_type, sizeof(pcb->interrupt_type), 0);
     recv(socket, &pcb->process_size, sizeof(pcb->process_size), 0);
     recv(socket, &pcb->program_counter, sizeof(pcb->program_counter), 0);
+    recv(socket, &pcb->registers[AX], sizeof(uint32_t), 0);
+    recv(socket, &pcb->registers[BX], sizeof(uint32_t), 0);
+    recv(socket, &pcb->registers[CX], sizeof(uint32_t), 0);
+    recv(socket, &pcb->registers[DX], sizeof(uint32_t), 0);
     recv(socket, &pcb->page_table, sizeof(pcb->page_table), 0);
     recv(socket, &pcb->estimated_burst, sizeof(pcb->estimated_burst), 0);
     recv(socket, &pcb->socket_consola, sizeof(pcb->socket_consola), 0);

@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <commons/collections/list.h>
 
 #ifndef __STRUCTURES_H
@@ -34,7 +35,8 @@ typedef enum {
     INT_QUANTUM,               // Se usa para enviarlo al cpu_interrupt y se recibe por el kernel en cpu_dispatch
     INT_IO,
 	INT_PAGE_FAULT,
-    EXECUTION_FINISHED
+    EXECUTION_FINISHED,
+	NO_INTERRUPT
 } t_interrupt_type;
 
 typedef struct {
@@ -43,6 +45,7 @@ typedef struct {
 	t_interrupt_type interrupt_type;
 	unsigned int process_size;
 	unsigned int program_counter;
+	uint32_t registers[4];
 	unsigned int page_table;
 	double estimated_burst;
 	int socket_consola;
