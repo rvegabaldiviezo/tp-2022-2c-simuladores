@@ -19,25 +19,25 @@ fi
 if [ ! -z "$MODULO1" ]
 then
   echo -e "Abirendo terminal para $CYAN$MODULO1$NC con config $CYAN$CONFIG$NC"
-  x-terminal-emulator -T $MODULO1 -e "echo utnso | sudo -S ./run $MODULO1 $CONFIG;bash"
+  x-terminal-emulator -T $MODULO1 -e "echo utnso | sudo -S ./run $MODULO1 $CONFIG;read -p 'Presiona una tecla para continuar'"
 fi
 
 if [ ! -z "$MODULO2" ]
 then
   echo -e "Abirendo terminal para $CYAN$MODULO2$NC con config $CYAN$CONFIG$NC"
-  x-terminal-emulator -T $MODULO2 -e "echo utnso | sudo -S ./run $MODULO2 $CONFIG;bash"
+  x-terminal-emulator -T $MODULO2 -e "echo utnso | sudo -S ./run $MODULO2 $CONFIG;read -p 'Presiona una tecla para continuar'"
 fi
 
 if [ ! -z "$MODULO3" ]
 then
   echo -e "Abirendo terminal para $CYAN$MODULO3$NC con config $CYAN$CONFIG$NC"
-  x-terminal-emulator -T $MODULO3 -e "echo utnso | sudo -S ./run $MODULO3 $CONFIG;bash"
+  x-terminal-emulator -T $MODULO3 -e "echo utnso | sudo -S ./run $MODULO3 $CONFIG;read -p 'Presiona una tecla para continuar'"
 fi
 
 if [ ! -z "$MODULO4" ]
 then
   echo -e "Abirendo terminal para $CYAN$MODULO4$NC con config $CYAN$CONFIG$NC"
-  x-terminal-emulator -T $MODULO4 -e "echo utnso | sudo -S ./run $MODULO4 $CONFIG;bash"
+  x-terminal-emulator -T $MODULO4 -e "echo utnso | sudo -S ./run $MODULO4 $CONFIG;read -p 'Presiona una tecla para continuar'"
 fi
 
 #xterm -e "echo utnso | sudo -S ./run $MODULO1 $CONFIG"
