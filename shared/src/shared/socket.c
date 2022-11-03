@@ -104,11 +104,11 @@ int start_client_module(char* module)
 
 	get_ip_port_from_module(module, ip, port);
 
-	log_rectangle(logger, '=', '=', CENTER, "Creo socket cliente");
-	log_rectangle(logger, '|', ' ', LEFT, "MODULO [%s]", module);
-	log_rectangle(logger, '|', ' ', LEFT, "IP [%s]", ip);
-	log_rectangle(logger, '|', ' ', LEFT, "PUERTO [%s]", port);
-	log_rectangle(logger, '=', '=', CENTER, "");
+	log_rect(logger, "Creo socket cliente", 
+		"MODULO [%s]\n"
+		"IP [%s]\n"
+		"PUERTO [%s]"
+	, module, ip, port);
 
 	int socket_client = start_client(ip, port);
 	if(socket_client == -1)
@@ -130,11 +130,11 @@ int start_server_module(char* module)
 
 	get_ip_port_from_module(module, ip, port);
 
-	log_rectangle(logger, '=', '=', CENTER, "Creo socket servidor");
-	log_rectangle(logger, '|', ' ', LEFT, "MODULO [%s]", module);
-	log_rectangle(logger, '|', ' ', LEFT, "IP [%s]", ip);
-	log_rectangle(logger, '|', ' ', LEFT, "PUERTO [%s]", port);
-	log_rectangle(logger, '=', '=', CENTER, "");
+	log_rect(logger, "Creo socket servidor", 
+		"MODULO [%s]\n"
+		"IP [%s]\n"
+		"PUERTO [%s]"
+	, module, ip, port);
 
 	int socket_server = start_server(ip, port);
 

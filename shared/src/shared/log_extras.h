@@ -11,6 +11,7 @@ typedef enum {
 	RIGHT
 } align;
 
+void log_rect(t_log* logger, const char* title, const char* body, ...);
 void log_rectangle(t_log* logger, char border, char fill, align align, const char* message, ...);
 void log_instructions(t_log* logger, t_list* instructions);
 void log_pcb(t_log* logger, t_pcb* pcb);

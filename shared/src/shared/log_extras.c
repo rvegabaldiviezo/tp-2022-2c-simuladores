@@ -6,7 +6,57 @@
 #include "log_extras.h"
 #include "structures_translation.h"
 
-#define RECTANGLE_WIDTH 30
+#define RECTANGLE_WIDTH 50
+
+void log_rect(t_log* logger, const char* title, const char* body, ...)
+{
+	va_list arguments;
+	va_start(arguments, body);
+	body = string_from_vformat(body, arguments);
+
+	char* rectangle = string_new();
+	int odd_align = (string_length(title) % 2 != 0) ? 1 : 0;
+	char* top_left = string_repeat('-', (RECTANGLE_WIDTH - string_length(title)) / 2);
+	char* top_right = string_repeat('-', (RECTANGLE_WIDTH - string_length(title)) / 2 + odd_align);
+	string_append_with_format(&rectangle, "+%s%s%s+\n", top_left, title, top_right);
+	free(top_left);
+	free(top_right);
+
+	int line_count = 1;
+	for (int i = 0; i < strlen(body); i++) {
+		char c = body[i];
+
+		if (i == 0) 
+		{
+			string_append_with_format(&rectangle, "| %c", c);
+			line_count++;
+		} 
+		else if (c == '\n') 
+		{
+			char* fill = string_repeat(' ', RECTANGLE_WIDTH - line_count >= 0 ? RECTANGLE_WIDTH - line_count : 0);
+			string_append_with_format(&rectangle, "%s|\n| ", fill);
+			line_count = 1;
+			free(fill);
+		}
+		else if (i == strlen(body) - 1)
+		{
+			char* fill = string_repeat(' ', RECTANGLE_WIDTH - line_count - 1 >= 0 ? RECTANGLE_WIDTH - line_count - 1 : 0);
+			string_append_with_format(&rectangle, "%c%s|\n", c, fill);
+			line_count = 1;
+			free(fill);
+		}
+		else 
+		{
+			string_append_with_format(&rectangle, "%c", c);
+			line_count++;
+		}
+	}
+	char* bottom = string_repeat('-', RECTANGLE_WIDTH);
+	string_append_with_format(&rectangle, "+%s+\n", bottom);
+
+	log_trace(logger, "\n%s", rectangle);
+	free(rectangle);
+}
 
 void log_rectangle(t_log* logger, char border, char fill, align align, const char* message, ...)
 {
@@ -50,13 +100,11 @@ void log_rectangle(t_log* logger, char border, char fill, align align, const cha
 
 void log_instructions(t_log* logger, t_list* instructions)
 {
-	// Las muestro por pantall (eliminar luego esto)
-	log_rectangle(logger, '|', '-', CENTER, "{instructions}");
+	char* log_message = string_new();
 
 	for(int i = 0; i < list_size(instructions); i++) {
 		t_instruction* inst = list_get(instructions, i);
 
-		char* log_message = string_new();
 		string_append_with_format(&log_message, "%s", t_instruction_type_string[inst->instruction]);
 
 		t_list* parameters = inst->parameters;
@@ -70,31 +118,43 @@ void log_instructions(t_log* logger, t_list* instructions)
 			else
 				string_append_with_format(&log_message, " %i", (int)param->parameter);
 		}
-
-		log_rectangle(logger, '|', ' ', LEFT, log_message);
+		if(i != list_size(instructions) - 1) string_append(&log_message, "\n");
 	}
-	log_rectangle(logger, '|', '=', CENTER, "instructions");
+	log_rect(logger, "instructions", log_message);
 }
 
 void log_pcb(t_log* logger, t_pcb* pcb)
 {
-	log_rectangle(logger, '=', '=', CENTER, "{pcb}");
-	log_rectangle(logger, '|', '-', CENTER, "");
-	log_rectangle(logger, '|', ' ', LEFT, "pcb->id: %i", pcb->id);
-	log_rectangle(logger, '|', ' ', LEFT, "pcb->interrupt_type: %s", pcb->interrupt_type == -1 ? "" : t_interrupt_type_string[pcb->interrupt_type]);
-	log_rectangle(logger, '|', ' ', LEFT, "pcb->process_size: %i", pcb->process_size);
-	log_rectangle(logger, '|', ' ', LEFT, "pcb->program_counter: %i", pcb->program_counter);
-	log_rectangle(logger, '|', ' ', LEFT, "pcb->register[%s]: %i", t_register_string[AX], pcb->registers[AX]);
-	log_rectangle(logger, '|', ' ', LEFT, "pcb->register[%s]: %i", t_register_string[BX], pcb->registers[BX]);
-	log_rectangle(logger, '|', ' ', LEFT, "pcb->register[%s]: %i", t_register_string[CX], pcb->registers[CX]);
-	log_rectangle(logger, '|', ' ', LEFT, "pcb->register[%s]: %i", t_register_string[DX], pcb->registers[DX]);
-	log_rectangle(logger, '|', ' ', LEFT, "pcb->page_table: %i", pcb->page_table);
-	log_rectangle(logger, '|', ' ', LEFT, "pcb->estimated_burst: %f", pcb->estimated_burst);
-	log_rectangle(logger, '|', ' ', LEFT, "pcb->socket_consola: %i", pcb->socket_consola);
-	log_rectangle(logger, '|', ' ', LEFT, "pcb->start_burst: %f", pcb->start_burst);
-	log_rectangle(logger, '|', ' ', LEFT, "pcb->estimated_remaining_burst: %f", pcb->estimated_remaining_burst);
-	log_rectangle(logger, '|', ' ', LEFT, "pcb->execution_time: %f", pcb->execution_time);
-	log_rectangle(logger, '|', ' ', LEFT, "pcb->instructions:");
+	log_rect(logger, "pcb", 
+		"pcb->id: %i \n"
+		"pcb->interrupt_type: %s \n"
+		"pcb->process_size: %i \n"
+		"pcb->program_counter: %i \n"
+		"pcb->register[%s]: %i \n"
+		"pcb->register[%s]: %i \n"
+		"pcb->register[%s]: %i \n"
+		"pcb->register[%s]: %i \n"
+		"pcb->page_table: %i \n"
+		"pcb->estimated_burst: %f \n"
+		"pcb->socket_consola: %i \n"
+		"pcb->start_burst: %f \n"
+		"pcb->estimated_remaining_burst: %f \n"
+		"pcb->execution_time: %f \n"
+		"pcb->instructions:", 
+		pcb->id, 
+		t_interrupt_type_string[pcb->interrupt_type],
+		pcb->process_size,
+		pcb->program_counter,
+		t_register_string[AX], pcb->registers[AX],
+		t_register_string[BX], pcb->registers[BX],
+		t_register_string[CX], pcb->registers[CX],
+		t_register_string[DX], pcb->registers[DX],
+		pcb->page_table,
+		pcb->estimated_burst,
+		pcb->socket_consola,
+		pcb->start_burst,
+		pcb->estimated_remaining_burst,
+		pcb->execution_time
+	);
 	log_instructions(logger, pcb->instructions);
-	log_rectangle(logger, '=', '=', CENTER, "pcb");
 }

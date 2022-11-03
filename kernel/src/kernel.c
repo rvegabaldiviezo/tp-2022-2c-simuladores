@@ -77,7 +77,7 @@ void create_process(int socket_consola, t_list* instructions)
 {
 	t_pcb* pcb = malloc(sizeof(t_pcb));
 	pcb->id = ++process_count;
-	pcb->interrupt_type = -1;
+	pcb->interrupt_type = NO_INTERRUPT;
 	pcb->socket_consola = socket_consola;
 	pcb->instructions = instructions;
 	pcb->registers[AX] = 0;
