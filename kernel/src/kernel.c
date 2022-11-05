@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <commons/log.h>
 #include <commons/config.h>
+#include <commons/string.h>
 #include <shared/socket.h>
 #include <shared/serialization.h>
 #include <shared/structures.h>
@@ -27,18 +28,29 @@ t_log* logger;
 
 // Config
 t_config* config;
+// Config values
+int max_degree_multiprogramming;
+t_scheduling_algorithm scheduling_algorithm;
+int quantum_rr;
 
 // Connections
 int socket_cpu_interrupt;
 int socket_cpu_dispatch;
 int socket_memoria;
 
+// Threads
+pthread_t thread_schedulling;
+pthread_t thread_interrupt;
+
 int main(int argc, char **argv) 
 {
 	initialize_logger(argv);
 	initialize_config(argv);
 	initialize_sockets();
-	initialize_queues();
+	initialize_scheduller();
+
+	pthread_create(&thread_schedulling, NULL, start_schedulling, NULL); // thread schedulling
+	pthread_create(&thread_interrupt, NULL, quantum_time, NULL); // thread interrupt
 
 	int socket_kernel = start_server_module("KERNEL");
 	while(true) {
@@ -63,6 +75,18 @@ void initialize_config(char **argv)
 		log_error(logger, "No se pudo abrir la config de kernel");
         exit(EXIT_FAILURE);
 	}
+
+    max_degree_multiprogramming = config_get_int_value(config, "GRADO_MAX_MULTIPROGRAMACION");
+
+	char* shceduling_algorithm_string = config_get_string_value(config, "ALGORITMO_PLANIFICACION");
+	if(string_equals_ignore_case(shceduling_algorithm_string, "FIFO"))
+		scheduling_algorithm = FIFO;
+	else if(string_equals_ignore_case(shceduling_algorithm_string, "RR"))
+		scheduling_algorithm = RR;
+	else if(string_equals_ignore_case(shceduling_algorithm_string, "FEEDBACK"))
+		scheduling_algorithm = FEEDBACK;
+
+	quantum_rr = config_get_int_value(config, "QUANTUM_RR");
 }
 
 void initialize_sockets()
@@ -84,8 +108,7 @@ void create_process(int socket_consola, t_list* instructions)
 	pcb->registers[BX] = 0;
 	pcb->registers[CX] = 0;
 	pcb->registers[DX] = 0;
+	pcb->execution_time = 0.0;
 
 	new_state(pcb);
-	execute_algorithm();
-	wait_cpu_dispatch();
 }

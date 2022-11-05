@@ -24,4 +24,8 @@ t_list* recv_instructions(int socket);
 void send_pcb(int socket, t_pcb* pcb);
 t_pcb* recv_pcb(int socket);
 
+// Para poder recibir y enviar que hubo una interrupcion por quantum entre el kernel y la cpu
+// Desarrollado por ramon
+void send_interrupt(int socket); // falta implementar
+void recv_interrupt(int socket);
 #endif

@@ -135,10 +135,7 @@ void log_pcb(t_log* logger, t_pcb* pcb)
 		"pcb->register[%s]: %i \n"
 		"pcb->register[%s]: %i \n"
 		"pcb->page_table: %i \n"
-		"pcb->estimated_burst: %f \n"
 		"pcb->socket_consola: %i \n"
-		"pcb->start_burst: %f \n"
-		"pcb->estimated_remaining_burst: %f \n"
 		"pcb->execution_time: %f \n"
 		"pcb->instructions:", 
 		pcb->id, 
@@ -150,10 +147,7 @@ void log_pcb(t_log* logger, t_pcb* pcb)
 		t_register_string[CX], pcb->registers[CX],
 		t_register_string[DX], pcb->registers[DX],
 		pcb->page_table,
-		pcb->estimated_burst,
 		pcb->socket_consola,
-		pcb->start_burst,
-		pcb->estimated_remaining_burst,
 		pcb->execution_time
 	);
 	log_instructions(logger, pcb->instructions);

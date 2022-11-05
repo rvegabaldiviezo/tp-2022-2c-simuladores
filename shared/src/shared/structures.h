@@ -30,6 +30,12 @@ typedef struct {
 	t_list* parameters;
 } t_instruction;
 
+typedef enum {
+	FIFO,
+	RR,
+	FEEDBACK
+} t_scheduling_algorithm;
+
 // Proposicion
 typedef enum {
     INT_QUANTUM,               // Se usa para enviarlo al cpu_interrupt y se recibe por el kernel en cpu_dispatch
@@ -47,10 +53,7 @@ typedef struct {
 	unsigned int program_counter;
 	uint32_t registers[4];
 	unsigned int page_table;
-	double estimated_burst;
 	int socket_consola;
-	double start_burst;
-	double estimated_remaining_burst;
 	double execution_time;
 	t_list* instructions;
 } t_pcb;

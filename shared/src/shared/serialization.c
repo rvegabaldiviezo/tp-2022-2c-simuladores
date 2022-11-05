@@ -211,10 +211,7 @@ void send_pcb(int socket, t_pcb* pcb)
     add_to_buffer(buffer, &pcb->program_counter, sizeof(pcb->program_counter));
     add_registers(buffer, pcb->registers);
     add_to_buffer(buffer, &pcb->page_table, sizeof(pcb->page_table));
-    add_to_buffer(buffer, &pcb->estimated_burst, sizeof(pcb->estimated_burst));
     add_to_buffer(buffer, &pcb->socket_consola, sizeof(pcb->socket_consola));
-    add_to_buffer(buffer, &pcb->start_burst, sizeof(pcb->start_burst));
-    add_to_buffer(buffer, &pcb->estimated_remaining_burst, sizeof(pcb->estimated_remaining_burst));
     add_to_buffer(buffer, &pcb->execution_time, sizeof(pcb->execution_time));
     add_instructions(buffer, pcb->instructions);
 
@@ -235,10 +232,7 @@ t_pcb* recv_pcb(int socket)
     recv(socket, &pcb->registers[CX], sizeof(uint32_t), 0);
     recv(socket, &pcb->registers[DX], sizeof(uint32_t), 0);
     recv(socket, &pcb->page_table, sizeof(pcb->page_table), 0);
-    recv(socket, &pcb->estimated_burst, sizeof(pcb->estimated_burst), 0);
     recv(socket, &pcb->socket_consola, sizeof(pcb->socket_consola), 0);
-    recv(socket, &pcb->start_burst, sizeof(pcb->start_burst), 0);
-    recv(socket, &pcb->estimated_remaining_burst, sizeof(pcb->estimated_remaining_burst), 0);
     recv(socket, &pcb->execution_time, sizeof(pcb->execution_time), 0);
     pcb->instructions = recv_instructions(socket);
 
