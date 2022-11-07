@@ -21,6 +21,7 @@ char* recv_string(int socket);
 void send_instructions(int socket, t_list* instructions);
 t_list* recv_instructions(int socket);
 
+void send_pcb_io(int socket, t_pcb* pcb, char* device, int arg);
 void send_pcb(int socket, t_pcb* pcb);
 t_pcb* recv_pcb(int socket);
 

@@ -200,6 +200,31 @@ t_list* recv_instructions(int socket)
     
     return instructions;
 }
+// CPU -> Kernel
+/**
+ * Envia pcb, dispositivo en forma de string y un argumento (puede ser un registro o unidades de trabajo)
+ */
+void send_pcb_io(int socket, t_pcb* pcb, char* device, int arg)
+{
+    t_buffer* buffer = create_buffer();
+
+    add_op_code(buffer, PCB);
+    add_to_buffer(buffer, &pcb->id, sizeof(pcb->id));
+    add_to_buffer(buffer, &pcb->interrupt_type, sizeof(pcb->interrupt_type));
+    add_to_buffer(buffer, &pcb->process_size, sizeof(pcb->process_size));
+    add_to_buffer(buffer, &pcb->program_counter, sizeof(pcb->program_counter));
+    add_registers(buffer, pcb->registers);
+    add_to_buffer(buffer, &pcb->page_table, sizeof(pcb->page_table));
+    add_to_buffer(buffer, &pcb->socket_consola, sizeof(pcb->socket_consola));
+    add_to_buffer(buffer, &pcb->execution_time, sizeof(pcb->execution_time));
+    add_instructions(buffer, pcb->instructions);
+    add_string(buffer, device);
+    add_to_buffer(buffer, &arg, sizeof(arg));
+
+    send_buffer(socket, buffer);
+    destroy_buffer(buffer);
+}
+// Kernel -> CPU o CPU -> Kernel
 void send_pcb(int socket, t_pcb* pcb)
 {
     t_buffer* buffer = create_buffer();

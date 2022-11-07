@@ -83,7 +83,7 @@ void block_state(t_pcb* pcb)
  */
 void execute_algorithm()
 {
-    log_trace(logger, "Esperando un...");
+    log_trace(logger, "Esperando a que llegue un proceso en READY o NEW...");
     sem_wait(&can_execute);
 
     t_pcb* pcb;
@@ -140,6 +140,12 @@ void wait_cpu_dispatch()
                 execute_algorithm();
                 break;
             case INT_IO:
+                // obtenemos el dispositivo y registro o unidad de trabajo que tambien envio la cpu
+                char* device = recv_string(socket_cpu_dispatch);
+                int arg;
+                recv(socket_cpu_dispatch, &arg, sizeof(arg), 0);
+                log_info(logger, "PID: %i - Bloqueado por: %s", pcb->id, device);
+                log_trace(logger, "Con argumento: %i", arg);
                 // metemos el pcb en bloqueado
                 block_state(pcb);
                 // resolver la solicitud de i/o
