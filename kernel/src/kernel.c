@@ -16,6 +16,7 @@
 #include <commons/log.h>
 #include <commons/config.h>
 #include <commons/string.h>
+#include <commons/collections/list.h>
 #include <shared/socket.h>
 #include <shared/serialization.h>
 #include <shared/structures.h>
@@ -32,6 +33,8 @@ t_config* config;
 int max_degree_multiprogramming;
 t_scheduling_algorithm scheduling_algorithm;
 int quantum_rr;
+t_list* io_devices_list;
+t_list* io_times_list;
 
 // Connections
 int socket_cpu_interrupt;
@@ -50,7 +53,7 @@ int main(int argc, char **argv)
 	initialize_scheduller();
 
 	pthread_create(&thread_schedulling, NULL, start_schedulling, NULL); // thread schedulling
-	pthread_create(&thread_interrupt, NULL, quantum_time, NULL); // thread interrupt
+	pthread_create(&thread_interrupt, NULL, start_quantum, NULL); // thread interrupt
 
 	int socket_kernel = start_server_module("KERNEL");
 	while(true) {

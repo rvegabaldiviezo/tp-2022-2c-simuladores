@@ -1,10 +1,15 @@
+#include <pthread.h>
+#include <stdlib.h>
+#include <sys/socket.h>
 #include <semaphore.h>
 #include <commons/collections/queue.h>
+#include <commons/collections/dictionary.h>
 #include <commons/log.h>
 #include <commons/config.h>
 #include <shared/structures.h>
 #include <shared/serialization.h>
 #include <shared/log_extras.h>
+#include "scheduller.h"
 
 // Logger
 extern t_log* logger;
@@ -23,6 +28,8 @@ t_queue* new_queue;
 t_queue* ready_1_queue;
 t_queue* ready_2_queue;
 t_queue* block_queue;
+// IO Devices
+t_dictionary* io_devices;
 // Semaphores
 sem_t can_execute;
 
@@ -32,6 +39,17 @@ void initialize_scheduller()
     ready_1_queue = queue_create();
     ready_2_queue = queue_create();
     block_queue = queue_create();
+    io_devices = dictionary_create();
+
+    char** config_devices = config_get_array_value(config, "DISPOSITIVOS_IO");
+    int i_device = 0;
+    while(config_devices[i_device] != NULL) {
+        char* device = config_devices[i_device];
+        dictionary_put(io_devices, device, queue_create());
+        log_trace(logger, "Genero pila para dispositivo %s", device);
+        i_device++;
+    }
+
     sem_init(&can_execute, 0, 0);
 }
 
@@ -43,14 +61,16 @@ void* start_schedulling(void* arg)
 
 void new_state(t_pcb* pcb)
 {
-    queue_push(new_queue, pcb);
-    log_info(logger, "Se crea el proceso %i en NEW", pcb->id);
 
     if(queue_size(ready_1_queue) < max_degree_multiprogramming) 
     {
-        queue_pop(new_queue);
         queue_push(ready_1_queue, pcb);
         log_info(logger, "PID: %i - Estado Anterior: NEW - Estado Actual: READY", pcb->id);
+    }
+    else
+    {
+        queue_push(new_queue, pcb);
+        log_info(logger, "Se crea el proceso %i en NEW", pcb->id);
     }
     sem_post(&can_execute);
 }
@@ -76,6 +96,28 @@ void ready_state(t_pcb* pcb)
 void block_state(t_pcb* pcb)
 {
 
+}
+
+typedef struct {
+    t_pcb* pcb;
+    char* device;
+    int arg;
+} t_io_thread_argument;
+
+void* handle_io(void* arg)
+{
+
+}
+
+void create_io_thread(t_pcb* pcb, char* device, int arg)
+{
+    t_io_thread_argument* io_thread_argument = malloc(sizeof(t_io_thread_argument));
+    io_thread_argument->pcb = pcb;
+    io_thread_argument->device = device;
+    io_thread_argument->arg = arg;
+
+    // TODO crear hilos
+    //pthread_create(NULL, )
 }
 
 /**
@@ -161,6 +203,8 @@ void wait_cpu_dispatch()
                     4.- Al recibir la respuesta del módulo memoria, desbloquear el proceso y colocarlo en la cola de ready correspondiente.
                 */
                 break;
+            default:
+                break;
         }
     }
 }
@@ -169,7 +213,16 @@ void wait_cpu_dispatch()
 /**
  * Se debe esperar por tiempo de quantum y enviar interrupcion por quantum a la cpu
  */
-void* quantum_time(void* arg)
+void* start_quantum(void* arg)
 {
-    
+    if(scheduling_algorithm == FIFO) {
+        return;
+    }
+
+    while(true)
+    {
+        sleep((int)(quantum_rr * 0.001));
+        send_interrupt(socket_cpu_interrupt);
+        log_trace(logger, "Envio interrupcion por Quantum, espero %f segundos", (int)(quantum_rr * 0.001));
+    }
 }

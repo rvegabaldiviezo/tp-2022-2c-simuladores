@@ -8,4 +8,4 @@ void block_state(t_pcb* pcb);
 void* start_schedulling(void* arg);
 void execute_algorithm();
 void wait_cpu_dispatch();
-void* quantum_time(void* arg);
+void* start_quantum(void* arg);

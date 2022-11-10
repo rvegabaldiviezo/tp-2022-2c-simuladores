@@ -22,7 +22,10 @@
     "node.h": "c",
     "scheduller.h": "c",
     "kernel.h": "c",
-    "pthread.h": "c"
+    "pthread.h": "c",
+    "queue.h": "c",
+    "semaphore.h": "c",
+    "stdint.h": "c"
   },
   "C_Cpp.errorSquiggles": "Disabled"
 }

@@ -263,3 +263,14 @@ t_pcb* recv_pcb(int socket)
 
     return pcb;
 }
+
+void send_interrupt(int socket)
+{
+    int dummy = 1;
+    send(socket, &dummy, sizeof(dummy), 0);
+}
+void recv_interrupt(int socket)
+{
+    int dummy;
+    recv(socket, &dummy, sizeof(dummy), 0);
+}

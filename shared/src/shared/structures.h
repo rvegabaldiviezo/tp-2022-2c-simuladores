@@ -46,6 +46,11 @@ typedef enum {
 } t_interrupt_type;
 
 typedef struct {
+	int size;
+	int page_table_index;
+} t_segment;
+
+typedef struct {
 	int id;
 	// Agregar una nueva variable que defina razon de interrupt
 	t_interrupt_type interrupt_type;
@@ -55,6 +60,7 @@ typedef struct {
 	unsigned int page_table;
 	int socket_consola;
 	double execution_time;
+	t_list* segment_table;
 	t_list* instructions;
 } t_pcb;
 
