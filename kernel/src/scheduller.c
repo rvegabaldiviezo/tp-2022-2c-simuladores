@@ -1,10 +1,12 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <sys/socket.h>
+#include <string.h>
 #include <semaphore.h>
 #include <commons/collections/queue.h>
 #include <commons/collections/dictionary.h>
 #include <commons/log.h>
+#include <commons/string.h>
 #include <commons/config.h>
 #include <shared/structures.h>
 #include <shared/serialization.h>
@@ -29,7 +31,13 @@ t_queue* ready_1_queue;
 t_queue* ready_2_queue;
 t_queue* block_queue;
 // IO Devices
-t_dictionary* io_devices;
+t_dictionary* io_queues;
+t_dictionary* io_semaphores;
+typedef struct {
+    t_pcb* pcb;
+    char* device;
+    int arg;
+} t_io;
 // Semaphores
 sem_t can_execute;
 
@@ -39,18 +47,68 @@ void initialize_scheduller()
     ready_1_queue = queue_create();
     ready_2_queue = queue_create();
     block_queue = queue_create();
-    io_devices = dictionary_create();
+    io_queues = dictionary_create();
+    io_semaphores = dictionary_create();
 
     char** config_devices = config_get_array_value(config, "DISPOSITIVOS_IO");
     int i_device = 0;
     while(config_devices[i_device] != NULL) {
+        // Creamos una pila para este dispositivo
         char* device = config_devices[i_device];
-        dictionary_put(io_devices, device, queue_create());
-        log_trace(logger, "Genero pila para dispositivo %s", device);
+        dictionary_put(io_queues, device, queue_create());
+        // Creamos un semaforo para este dispositivo (para indicar que se puede popear)
+        sem_t* io_sem = malloc(sizeof(io_sem));
+        sem_init(io_sem, 0, 0);
+        dictionary_put(io_semaphores, device, io_sem);
+        pthread_t tid; // no voy a usar el thread id asi que lo creo y muere
+        pthread_create(&tid, NULL, handle_io, device);
         i_device++;
     }
 
     sem_init(&can_execute, 0, 0);
+}
+
+void log_ready()
+{
+    char* pids;
+
+    switch (scheduling_algorithm)
+    {
+    case FIFO:
+    case RR:
+        pids = string_new();
+        for(int i = 0; i < queue_size(ready_1_queue); i++)
+        {
+            t_pcb* pcb = (t_pcb*)queue_pop(ready_1_queue);
+            string_append_with_format(&pids, "%s%i", i == 0 ? "" : ", ", pcb->id);
+            queue_push(ready_1_queue, pcb);
+        }
+        log_info(logger, "Cola Ready %s: [%s]", scheduling_algorithm == FIFO ? "FIFO" : "RR", pids);
+        free(pids);
+        break;
+    
+    default:
+        pids = string_new();
+        for(int i = 0; i < queue_size(ready_1_queue); i++)
+        {
+            t_pcb* pcb = (t_pcb*)queue_pop(ready_1_queue);
+            string_append_with_format(&pids, "%s%i", i == 0 ? "" : ", ", pcb->id);
+            queue_push(ready_1_queue, pcb);
+        }
+        log_info(logger, "Cola Ready 1 FEEDBACK: [%s]", pids);
+        free(pids);
+
+        pids = string_new();
+        for(int i = 0; i < queue_size(ready_2_queue); i++)
+        {
+            t_pcb* pcb = (t_pcb*)queue_pop(ready_2_queue);
+            string_append_with_format(&pids, "%s%i", i == 0 ? "" : ", ", pcb->id);
+            queue_push(ready_2_queue, pcb);
+        }
+        log_info(logger, "Cola Ready 2 FEEDBACK: [%s]", pids);
+        free(pids);
+        break;
+    }
 }
 
 void* start_schedulling(void* arg)
@@ -75,7 +133,7 @@ void new_state(t_pcb* pcb)
     sem_post(&can_execute);
 }
 
-void ready_state(t_pcb* pcb)
+void ready_state_from_quantum(t_pcb* pcb)
 {
     switch (scheduling_algorithm)
     {
@@ -89,35 +147,61 @@ void ready_state(t_pcb* pcb)
         break;
     }
 
+    log_info(logger, "PID: %i - Desalojado por fin de Quantum", pcb->id);
     log_info(logger, "PID: %i - Estado Anterior: EXECUTE - Estado Actual: READY", pcb->id);
+    log_ready();
     sem_post(&can_execute);
 }
 
-void block_state(t_pcb* pcb)
+void ready_state_from_io(t_pcb* pcb)
 {
-
+    queue_push(ready_1_queue, pcb);
+    log_info(logger, "PID: %i - Estado Anterior: BLOCKED - Estado Actual: READY", pcb->id);
+    log_ready();
+    sem_post(&can_execute);
 }
 
-typedef struct {
-    t_pcb* pcb;
-    char* device;
-    int arg;
-} t_io_thread_argument;
+void block_state(t_pcb* pcb, char* device, int arg)
+{
+    t_io* io_data = malloc(sizeof(t_io));
+    io_data->pcb = pcb;
+    io_data->device = device;
+    io_data->arg = arg;
+
+    t_queue* device_queue = (t_queue*)dictionary_get(io_queues, device);
+    sem_t* io_sem = (sem_t*)dictionary_get(io_semaphores, device);
+
+    queue_push(device_queue, io_data);
+    log_trace(logger, "Encolo en device %s", device);
+    sem_post(io_sem);
+}
+
 
 void* handle_io(void* arg)
 {
+    char* device = (char*)arg;
+    log_trace(logger, "Se crea hilo para cola de %s", device);
+    t_queue* device_queue = (t_queue*)dictionary_get(io_queues, device);
+    sem_t* io_sem = (sem_t*)dictionary_get(io_semaphores, device);
+    
+    while(true) {
+        sem_wait(io_sem);
+        t_io* io_data = (t_io*)queue_pop(device_queue);
 
-}
-
-void create_io_thread(t_pcb* pcb, char* device, int arg)
-{
-    t_io_thread_argument* io_thread_argument = malloc(sizeof(t_io_thread_argument));
-    io_thread_argument->pcb = pcb;
-    io_thread_argument->device = device;
-    io_thread_argument->arg = arg;
-
-    // TODO crear hilos
-    //pthread_create(NULL, )
+        if(strcmp(device, "TECLADO")) {
+            // TODO
+            log_debug(logger, "Dispositivo %s usado por %i", device, io_data->pcb->id);
+            sleep(io_data->arg);
+        } else if(strcmp(device, "PANTALLA")) {
+            // TODO
+            log_debug(logger, "Dispositivo %s usado por %i", device, io_data->pcb->id);
+            sleep(io_data->arg);
+        } else {
+            log_debug(logger, "Dispositivo %s usado por %i", device, io_data->pcb->id);
+            sleep(io_data->arg);
+        }
+        ready_state_from_io(io_data->pcb);
+    }
 }
 
 /**
@@ -178,7 +262,7 @@ void wait_cpu_dispatch()
                 break;
             case INT_QUANTUM:
                 // metemos el pcb en la cola de ready
-                ready_state(pcb);
+                ready_state_from_quantum(pcb);
                 execute_algorithm();
                 break;
             case INT_IO:
@@ -186,11 +270,11 @@ void wait_cpu_dispatch()
                 char* device = recv_string(socket_cpu_dispatch);
                 int arg;
                 recv(socket_cpu_dispatch, &arg, sizeof(arg), 0);
+                log_info(logger, "PID: %i - Estado Anterior: EXECUTE - Estado Actual: BLOCKED", pcb->id);
                 log_info(logger, "PID: %i - Bloqueado por: %s", pcb->id, device);
                 log_trace(logger, "Con argumento: %i", arg);
-                // metemos el pcb en bloqueado
-                block_state(pcb);
-                // resolver la solicitud de i/o
+                // resolver la solicitud de i/o uno de los hilos
+                block_state(pcb, device, arg);
                 // acordarse de implentar un sem_post(&can_execute); al desbloquearse
                 execute_algorithm();
                 break;

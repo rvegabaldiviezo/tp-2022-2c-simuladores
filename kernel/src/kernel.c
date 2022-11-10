@@ -68,7 +68,7 @@ int main(int argc, char **argv)
 
 void initialize_logger(char **argv)
 {
-	logger = log_create("kernel.log", "kernel", true, LOG_LEVEL_TRACE);
+	logger = log_create("kernel.log", "kernel", true, LOG_LEVEL_DEBUG);
 }
 
 void initialize_config(char **argv)
