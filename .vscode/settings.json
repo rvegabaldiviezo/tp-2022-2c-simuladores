@@ -25,7 +25,8 @@
     "pthread.h": "c",
     "queue.h": "c",
     "semaphore.h": "c",
-    "stdint.h": "c"
+    "stdint.h": "c",
+    "unistd.h": "c"
   },
   "C_Cpp.errorSquiggles": "Disabled"
 }

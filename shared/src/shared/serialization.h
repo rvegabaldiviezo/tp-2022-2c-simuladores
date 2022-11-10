@@ -8,12 +8,20 @@ typedef enum {
     STRING,
     INSTRUCTIONS,
     PCB,
+    TECLADO,
+    PANTALLA,
+    EXIT_EXECUTION
 } op_code;
 
 typedef struct {
     int size;
     void* stream;
 } t_buffer;
+
+op_code recv_and_validate_op_code_is(int socket, op_code op_code_expected);
+op_code recv_op_code(int socket);
+
+int recv_int(int socket);
 
 void send_string(int socket, char* string);
 char* recv_string(int socket);
@@ -29,4 +37,12 @@ t_pcb* recv_pcb(int socket);
 // Desarrollado por ramon
 void send_interrupt(int socket); // falta implementar
 void recv_interrupt(int socket);
+
+// Kernel -> Consola
+void send_teclado(int socket);
+void send_pantalla(int socket, int value);
+void send_exit(int socket);
+// Consola -> Kernel
+void send_teclado_response(int socket, int value);
+void send_pantalla_response(int socket);
 #endif

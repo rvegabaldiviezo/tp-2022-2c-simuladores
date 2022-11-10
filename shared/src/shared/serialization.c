@@ -24,6 +24,19 @@ op_code recv_and_validate_op_code_is(int socket, op_code op_code_expected)
     }
     return op_code_received;
 }
+op_code recv_op_code(int socket)
+{
+    // Recibo el codigo de operacion
+    op_code op_code_received;
+    recv(socket, &op_code_received, sizeof(op_code), 0);
+    return op_code_received;
+}
+int recv_int(int socket)
+{
+    int value;
+    recv(socket, &value, sizeof(int), 0);
+    return value;
+}
 
 /*
  * --- Funciones para facilitar el uso de buffers ---
@@ -273,4 +286,45 @@ void recv_interrupt(int socket)
 {
     int dummy;
     recv(socket, &dummy, sizeof(dummy), 0);
+}
+
+// Kernel -> Consola
+void send_teclado(int socket)
+{
+    t_buffer* buffer = create_buffer();
+    add_op_code(buffer, TECLADO);
+    send_buffer(socket, buffer);
+    destroy_buffer(buffer);
+}
+void send_pantalla(int socket, int value)
+{
+    t_buffer* buffer = create_buffer();
+    add_op_code(buffer, PANTALLA);
+    add_to_buffer(buffer, &value, sizeof(value));
+    send_buffer(socket, buffer);
+    destroy_buffer(buffer);
+}
+void send_exit(int socket)
+{
+    t_buffer* buffer = create_buffer();
+    add_op_code(buffer, EXIT_EXECUTION);
+    send_buffer(socket, buffer);
+    destroy_buffer(buffer);
+}
+// Consola -> Kernel
+void send_teclado_response(int socket, int value)
+{
+    t_buffer* buffer = create_buffer();
+    add_op_code(buffer, TECLADO);
+    add_to_buffer(buffer, &value, sizeof(value));
+    send_buffer(socket, buffer);
+    destroy_buffer(buffer);
+}
+// Consola -> Kernel
+void send_pantalla_response(int socket)
+{
+    t_buffer* buffer = create_buffer();
+    add_op_code(buffer, PANTALLA);
+    send_buffer(socket, buffer);
+    destroy_buffer(buffer);
 }

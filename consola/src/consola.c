@@ -20,8 +20,10 @@ bash run.sh consola ../../config/base/consola.config ../../config/base/program1.
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <commons/log.h>
 #include <commons/config.h>
+#include <commons/string.h>
 #include <shared/structures.h>
 #include <shared/serialization.h>
 #include <shared/socket.h>
@@ -41,9 +43,10 @@ int main(int argc, char **argv) {
 	char* consola_config_path = argv[1];
 	char* program_path = argv[2];
 
-	logger = log_create("consola.log", "consola", true, LOG_LEVEL_TRACE);
+	logger = log_create("consola.log", "consola", true, LOG_LEVEL_DEBUG);
 	// Obtengo la config de consola
 	consola_config = config_create(consola_config_path);
+
 
 	if(consola_config == NULL) {
 		log_error(logger, "No se pudo abrir la config de consola");
@@ -59,6 +62,44 @@ int main(int argc, char **argv) {
 
 	log_trace(logger, "Envie a kernel las instrucciones");
 	log_instructions(logger, instructions);
+
+	// Ciclo de espera con el Kernel
+	while(true) {
+		log_trace(logger, "Espero al Kernel...");
+		op_code op = recv_op_code(socket_kernel);
+
+		switch (op)
+		{
+		case TECLADO:
+			// Espero un input por el teclado
+			char input[256];
+			do {
+				printf("Escriba un numero: ");
+				scanf("%s", input);
+			}
+			while(strlen(input) != strlen(string_itoa(atoi(input))));
+
+			// Mando al Kernel lo que obtuve del teclado
+			int teclado = atoi(input);
+			send_teclado_response(socket_kernel, teclado);
+			break;
+		
+		case PANTALLA: 
+			// Recibo el valor a imprimir por pantalla
+			int pantalla = recv_int(socket_kernel);
+			printf("Resultado: %i\n", pantalla);
+			// Le aviso al Kernel que ya mostre por pantalla el valor
+			send_pantalla_response(socket_kernel);
+			break;
+
+		case EXIT_EXECUTION:
+		default:
+			log_trace(logger, "Fianlizo la ejecucion de consola...");
+			goto exit_cycle;
+			break;
+		}
+	}
+	exit_cycle: ;
 
 	// Hay que liberar la memoria de lo que se reservo
 	list_destroy_and_destroy_elements(instructions, &destroy_instruction);

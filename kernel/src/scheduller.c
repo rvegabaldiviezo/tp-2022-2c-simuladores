@@ -1,6 +1,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <sys/socket.h>
+#include <unistd.h>
 #include <string.h>
 #include <semaphore.h>
 #include <commons/collections/queue.h>
@@ -119,7 +120,7 @@ void* start_schedulling(void* arg)
 
 void new_state(t_pcb* pcb)
 {
-
+    log_info(logger, "Se crea el proceso %i en NEW", pcb->id);
     if(queue_size(ready_1_queue) < max_degree_multiprogramming) 
     {
         queue_push(ready_1_queue, pcb);
@@ -128,7 +129,6 @@ void new_state(t_pcb* pcb)
     else
     {
         queue_push(new_queue, pcb);
-        log_info(logger, "Se crea el proceso %i en NEW", pcb->id);
     }
     sem_post(&can_execute);
 }
@@ -188,18 +188,36 @@ void* handle_io(void* arg)
         sem_wait(io_sem);
         t_io* io_data = (t_io*)queue_pop(device_queue);
 
-        if(strcmp(device, "TECLADO")) {
-            // TODO
-            log_debug(logger, "Dispositivo %s usado por %i", device, io_data->pcb->id);
-            sleep(io_data->arg);
-        } else if(strcmp(device, "PANTALLA")) {
-            // TODO
-            log_debug(logger, "Dispositivo %s usado por %i", device, io_data->pcb->id);
-            sleep(io_data->arg);
+        if(strcmp(device, "TECLADO") == 0) {
+            t_pcb* pcb = io_data->pcb;
+            t_register reg = (t_register)io_data->arg;
+
+            // Aviso a consola que escriba algo por teclado
+            log_debug(logger, "PID: %i - Envio a consola N°%i a que escriba un valor por TECLADO", pcb->id, pcb->socket_consola);
+            send_teclado(pcb->socket_consola);
+            // Me aseguro que la consola haya devuelto una respuesta por TECLADO
+            recv_and_validate_op_code_is(pcb->socket_consola, TECLADO);
+            // Recivo el valor del teclado
+            int value = recv_int(pcb->socket_consola);
+            log_debug(logger, "PID: %i - Recibi de consola N°%i el valor %i por TECLADO", pcb->id, pcb->socket_consola, value);
+            // Lo guardo en el registro indicado por CPU
+            pcb->registers[reg] = value;
+
+        } else if(strcmp(device, "PANTALLA") == 0) {
+            t_pcb* pcb = io_data->pcb;
+            t_register reg = (t_register)io_data->arg;
+
+            log_debug(logger, "PID: %i - Envio a consola N°%i que muestre %i por PANTALLA", pcb->id, pcb->socket_consola, pcb->registers[reg]);
+            // Aviso a consola que muestre algo por pantalla
+            send_pantalla(pcb->socket_consola, pcb->registers[reg]);
+            // Espero a que la consola me confirme que llego una pantalla
+            recv_and_validate_op_code_is(pcb->socket_consola, PANTALLA);
         } else {
             log_debug(logger, "Dispositivo %s usado por %i", device, io_data->pcb->id);
             sleep(io_data->arg);
         }
+        // Se termino de resolver el IO
+        // Desbloqueamos el proceso
         ready_state_from_io(io_data->pcb);
     }
 }
@@ -256,7 +274,8 @@ void wait_cpu_dispatch()
         // verificamos que hacer (porque nos envio el pcb la cpu)
         switch(pcb->interrupt_type) {
             case EXECUTION_FINISHED:
-                // avisamos a la consola de que se finalizo el proceso?
+                // avisamos a la consola de que se finalizo el proceso
+                send_exit(pcb->socket_consola);
                 log_info(logger, "PID: %i - Estado Anterior: EXECUTE - Estado Actual: EXIT", pcb->id);
                 execute_algorithm();
                 break;
@@ -307,6 +326,6 @@ void* start_quantum(void* arg)
     {
         sleep((int)(quantum_rr * 0.001));
         send_interrupt(socket_cpu_interrupt);
-        log_trace(logger, "Envio interrupcion por Quantum, espero %f segundos", (int)(quantum_rr * 0.001));
+        log_trace(logger, "Envio interrupcion por Quantum, espero %i segundos", (int)(quantum_rr * 0.001));
     }
 }
