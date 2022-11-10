@@ -6,6 +6,7 @@
 #include <commons/config.h>
 #include <shared/log_extras.h>
 #include <shared/structures.h>
+#include <shared/structures_translation.h>
 #include <shared/serialization.h>
 #include <shared/socket.h>
 #include <shared/environment_variables.h>
@@ -20,8 +21,7 @@ int instruction_delay,
 	interruption_quantum,
 	interruption_io_pf,
 	socket_cpu_dispatch,
-	socket_kernel_dispatch,
-	instruction_delay_sec;
+	socket_kernel_dispatch;
 char* replace_tlb;
 pthread_t thread_interrupt;
 //sem_t sem_interrupt;
@@ -51,7 +51,6 @@ int main(int argc, char **argv) {
 
 	instruction_delay = config_get_int_value(cpu_config, "RETARDO_INSTRUCCION");
 	log_trace(logger, "  RETARDO_INSTRUCCION: %i ms", instruction_delay);
-	instruction_delay_sec = instruction_delay * 0.001; // para poder utilizar la variable dentro de sleep
 
 	// Error por si no se paso bien el argumento
 
@@ -60,11 +59,14 @@ int main(int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 
-	connections();
+	//INITIALIZE VALUES
+	interruption_quantum = NO_INTERRUPT;
 
-	instruction_cycle();
+	connections();  // FUNCION INICIALIZAR DISPATCH E INTERRUPT
 
-	free_memory();
+	instruction_cycle();  // RECIBO -> CICLO -> ENVIO y repito
+
+	free_memory();   // Valgrind te necesito
 
 	// EXIT
 	return EXIT_SUCCESS;
@@ -80,12 +82,11 @@ void* start_interrupt(void* arg) {
 	int socket_kernel_interrupt = accept(socket_cpu_interrupt, NULL, NULL);
 	log_trace(logger, "Conexion con kernel interrupt: %i", socket_kernel_interrupt);
 
-	/*while(true){
-		// Introducir recibir interrupcion   EXECUTION_FINISHED > INT_IO = PAGE_FAULT > INT_QUANTUM FIJARSE CONDICIONES CARRERA
+	while(true){
+		// Introducir recibir interrupcion
+		recv_interrupt(socket_kernel_interrupt);
 		interruption_quantum = INT_QUANTUM;
-		sem_wait(sem_interrupt);
-		interruption_quantum = NO_INTERRUPT;
-	}*/
+	}
 }
 
 
@@ -118,21 +119,27 @@ void connections(){
 
 void instruction_cycle(){
 
+
 	while(true){
 		t_pcb* pcb = recv_pcb(socket_kernel_dispatch);
 		pcb->interrupt_type = NO_INTERRUPT;
-		interruption_quantum = NO_INTERRUPT;
 		interruption_io_pf = NO_INTERRUPT;
-		log_trace(logger, "Recibi PCB y ciclo instruccion");
+		log_trace(logger, "PCB RECIBIDO - Ciclo de instruccion ejecutando");
+
+		char* device;
+		int io_value;
+
 		while(pcb->interrupt_type == NO_INTERRUPT){
+			log_trace(logger, "FETCH");
 			// FETCH
 
 			t_instruction* instruction_fetched = list_get(pcb->instructions,pcb->program_counter);
 
 			//log_instructions(logger, pcb->instructions);
 
-			log_trace(logger, "FETCH COMPLETO");
+
 			// DECODE & EXECUTE
+			log_trace(logger, "DECODE");
 
 			t_parameter* param1;
 			t_parameter* param2;
@@ -147,11 +154,15 @@ void instruction_cycle(){
 				case SET:
 
 					set_execute(pcb, (t_register)param1->parameter, (uint32_t)param2->parameter);
+					log_info(logger, "PID: %i - Ejecutando: %s - %s - %i", pcb->id, t_instruction_type_string[instruction_fetched->instruction], t_register_string[(int)param1->parameter], (int)param2->parameter);
+					pcb->program_counter++;
 
 					break;
 				case ADD:
 
 					add_execute(pcb, (t_register)param1->parameter, (t_register)param2->parameter);
+					log_info(logger, "PID: %i - Ejecutando: %s - %s - %s", pcb->id, t_instruction_type_string[instruction_fetched->instruction], t_register_string[(int)param1->parameter], t_register_string[(int)param2->parameter]);
+					pcb->program_counter++;
 
 					break;
 				case MOV_IN:
@@ -159,29 +170,50 @@ void instruction_cycle(){
 					//t_register reg1 = list_get(instruction_fetched->parameters,0);
 					//uint32_t param1 = list_get(instruction_fetched->parameters,1);
 					//mov_in_execute(pcb, reg1, param1);
+					log_info(logger, "PID: %i - Ejecutando: %s - %s - %i", pcb->id, t_instruction_type_string[instruction_fetched->instruction], t_register_string[(int)param1->parameter], (int)param2->parameter);
+					pcb->program_counter++;
 
 					break;
 				case MOV_OUT:
 
 					//uint32_t param1 = list_get(instruction_fetched->parameters,0);
 					//t_register reg1 = list_get(instruction_fetched->parameters,1);
+					log_info(logger, "PID: %i - Ejecutando: %s - %i - %s", pcb->id, t_instruction_type_string[instruction_fetched->instruction], (int)param1->parameter, t_register_string[(int)param2->parameter]);
+					pcb->program_counter++;
 
 					break;
 				case IO:
 
-
+					device = (char*)param1->parameter;
+					io_value = (int)param2->parameter;
+					interruption_io_pf = INT_IO;
+					log_info(logger, "PID: %i - Ejecutando: %s - %s - %i", pcb->id, t_instruction_type_string[instruction_fetched->instruction], (char*)param1->parameter, (int)param2->parameter);
+					pcb->program_counter++;
 
 					break;
 				case EXIT:
 					// Guardar directo en pcb para hacer check al final
+					log_info(logger, "PID: %i - Ejecutando: %s", pcb->id, t_instruction_type_string[instruction_fetched->instruction]);
 					pcb->interrupt_type = EXECUTION_FINISHED;
 
 					break;
 			}
-			log_trace(logger, "DECODE/EXECUTE COMPLETO");
-			pcb->program_counter++;
 
-			// CHECK INTERRUPT
+
+
+			/*if(instruction_fetched->instruction != IO){
+					log_info(logger, "PID: %i - Ejecutando: %s - %i - %i", pcb->id, t_instruction_type_string[instruction_fetched->instruction], (int)param1->parameter, (int)param2->parameter);
+			}
+				else{
+					log_info(logger, "PID: %i - Ejecutando: %s - %s - %i", pcb->id, t_instruction_type_string[instruction_fetched->instruction], (char*)param1->parameter, (int)param2->parameter);
+			}*/
+
+
+
+			// CHECK INTERRUPT, HECHO ASI POR CONDICIONES DE CARRERA    EXECUTION_FINISHED > INT_IO = PAGE_FAULT > INT_QUANTUM
+
+			log_trace(logger, "CHECK INTERRUPT");
+
 
 			if(pcb->interrupt_type != EXECUTION_FINISHED){
 				if(interruption_io_pf == NO_INTERRUPT){
@@ -191,16 +223,29 @@ void instruction_cycle(){
 					pcb->interrupt_type = interruption_io_pf;
 				}
 			}
-			log_trace(logger, "CHECK INTERRUPT");
-			//log_trace(logger, "AX: %i", pcb->registers[AX]);
-			//log_trace(logger, "BX: %i", pcb->registers[BX]);
-			//log_trace(logger, "CX: %i", pcb->registers[CX]);
-			//log_trace(logger, "DX: %i", pcb->registers[DX]);
+
+
+
 		}
+
+
+
+		switch(pcb->interrupt_type){
+			case INT_IO:
+				send_pcb_io(socket_kernel_dispatch, pcb, device, io_value);
+				break;
+			case INT_PAGE_FAULT:
+				send_pcb(socket_kernel_dispatch, pcb);
+				break;
+			default:
+				send_pcb(socket_kernel_dispatch, pcb);
+				break;
+		}
+
+		interruption_quantum = NO_INTERRUPT;
+
 		log_pcb(logger, pcb);
-		send_pcb(socket_kernel_dispatch, pcb);
-		//sem_post(sem_interrupt);
-		log_trace(logger, "Envio PCB modificado");
+		log_trace(logger, "PCB ENVIADO - A la espera de otro proceso");
 
 	}
 }
@@ -219,14 +264,14 @@ void free_memory(){
 void set_execute(t_pcb* pcb, t_register reg1, uint32_t param1){
 
 	pcb->registers[reg1] = param1;
-	sleep(instruction_delay_sec);
+	sleep((int)(instruction_delay * 0.001));
 
 }
 
 void add_execute(t_pcb* pcb, t_register reg1, t_register reg2){
 
 	pcb->registers[reg1] = pcb->registers[reg1]+pcb->registers[reg2];
-	sleep(instruction_delay_sec);
+	sleep((int)(instruction_delay * 0.001));
 
 }
 
