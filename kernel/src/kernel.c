@@ -43,7 +43,6 @@ int socket_memoria;
 
 // Threads
 pthread_t thread_schedulling;
-pthread_t thread_interrupt;
 
 int main(int argc, char **argv) 
 {
@@ -53,7 +52,6 @@ int main(int argc, char **argv)
 	initialize_scheduller();
 
 	pthread_create(&thread_schedulling, NULL, start_schedulling, NULL); // thread schedulling
-	pthread_create(&thread_interrupt, NULL, start_quantum, NULL); // thread interrupt
 
 	int socket_kernel = start_server_module("KERNEL");
 	while(true) {
@@ -68,7 +66,7 @@ int main(int argc, char **argv)
 
 void initialize_logger(char **argv)
 {
-	logger = log_create("kernel.log", "kernel", true, LOG_LEVEL_DEBUG);
+	logger = log_create("kernel.log", "kernel", true, LOG_LEVEL_TRACE);
 }
 
 void initialize_config(char **argv)

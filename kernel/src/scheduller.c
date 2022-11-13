@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 #include <semaphore.h>
 #include <commons/collections/queue.h>
 #include <commons/collections/dictionary.h>
@@ -41,6 +42,8 @@ typedef struct {
 } t_io;
 // Semaphores
 sem_t can_execute;
+// Threads
+pthread_t thread_interrupt;
 
 void initialize_scheduller()
 {
@@ -114,6 +117,7 @@ void log_ready()
 
 void* start_schedulling(void* arg)
 {
+    log_trace(logger, "Se crea hilo para SCHEDULLER");
 	execute_algorithm();
 	wait_cpu_dispatch();
 }
@@ -147,8 +151,8 @@ void ready_state_from_quantum(t_pcb* pcb)
         break;
     }
 
-    log_info(logger, "PID: %i - Desalojado por fin de Quantum", pcb->id);
     log_info(logger, "PID: %i - Estado Anterior: EXECUTE - Estado Actual: READY", pcb->id);
+    log_info(logger, "PID: %i - Desalojado por fin de Quantum", pcb->id);
     log_ready();
     sem_post(&can_execute);
 }
@@ -241,7 +245,8 @@ void execute_algorithm()
         }
         else if(queue_size(new_queue) > 0) {
             pcb = (t_pcb*)queue_pop(new_queue);
-            log_info(logger, "PID: %i - Estado Anterior: NEW - Estado Actual: EXECUTE", pcb->id);
+            log_info(logger, "PID: %i - Estado Anterior: NEW - Estado Actual: READY", pcb->id);
+            log_info(logger, "PID: %i - Estado Anterior: READY - Estado Actual: EXECUTE", pcb->id);
         }
 
         break;
@@ -256,13 +261,17 @@ void execute_algorithm()
         }
         else if(queue_size(new_queue) > 0) {
             pcb = (t_pcb*)queue_pop(new_queue);
-            log_info(logger, "PID: %i - Estado Anterior: NEW - Estado Actual: EXECUTE", pcb->id);
+            log_info(logger, "PID: %i - Estado Anterior: NEW - Estado Actual: READY", pcb->id);
+            log_info(logger, "PID: %i - Estado Anterior: READY - Estado Actual: EXECUTE", pcb->id);
         }
         break;
     }
 
     send_pcb(socket_cpu_dispatch, pcb);
-    
+    // Empezamos el thread de quantum
+    if(scheduling_algorithm != FIFO) {
+	    pthread_create(&thread_interrupt, NULL, start_quantum, NULL); // thread interrupt
+    }
 }
 
 void wait_cpu_dispatch()
@@ -271,6 +280,14 @@ void wait_cpu_dispatch()
     {
         // Se espera a recibir el pcb de la cpu porque termino de ejecutar
         t_pcb* pcb = recv_pcb(socket_cpu_dispatch);
+        // Ya no hace falta el fin de quantum
+        if(scheduling_algorithm != FIFO) {
+            if(pthread_cancel(thread_interrupt) == 0) {
+                log_debug(logger, "Thread INTERRUPT destruido");
+            } else {
+                log_error(logger, "No se pudo cancelar el thread de INTERRUPT");
+            }
+        }
         // verificamos que hacer (porque nos envio el pcb la cpu)
         switch(pcb->interrupt_type) {
             case EXECUTION_FINISHED:
@@ -316,16 +333,12 @@ void wait_cpu_dispatch()
 /**
  * Se debe esperar por tiempo de quantum y enviar interrupcion por quantum a la cpu
  */
+// Cuando no hay ningun proceso a ejecutar no se debe enviar interrupciones
+// Cuando llega un proceso recien ahi empieza a contar
 void* start_quantum(void* arg)
 {
-    if(scheduling_algorithm == FIFO) {
-        return;
-    }
-
-    while(true)
-    {
-        sleep((int)(quantum_rr * 0.001));
-        send_interrupt(socket_cpu_interrupt);
-        log_trace(logger, "Envio interrupcion por Quantum, espero %i segundos", (int)(quantum_rr * 0.001));
-    }
+    log_trace(logger, "Se crea hilo para INTERRUPT");
+    sleep((int)(quantum_rr * 0.001));
+    send_interrupt(socket_cpu_interrupt);
+    log_trace(logger, "Envie interrupcion por Quantum tras %i segundos", (int)(quantum_rr * 0.001));
 }
