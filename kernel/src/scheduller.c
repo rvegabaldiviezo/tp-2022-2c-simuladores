@@ -1,6 +1,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <sys/socket.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
@@ -31,9 +32,9 @@ extern int socket_memoria;
 t_queue* new_queue;
 t_queue* ready_1_queue;
 t_queue* ready_2_queue;
-t_queue* block_queue;
 // IO Devices
 t_dictionary* io_queues;
+t_dictionary* io_times;
 t_dictionary* io_semaphores;
 typedef struct {
     t_pcb* pcb;
@@ -50,16 +51,19 @@ void initialize_scheduller()
     new_queue = queue_create();
     ready_1_queue = queue_create();
     ready_2_queue = queue_create();
-    block_queue = queue_create();
     io_queues = dictionary_create();
     io_semaphores = dictionary_create();
+    io_times = dictionary_create();
 
     char** config_devices = config_get_array_value(config, "DISPOSITIVOS_IO");
+    char** config_devices_time = config_get_array_value(config, "TIEMPOS_IO");
     int i_device = 0;
     while(config_devices[i_device] != NULL) {
         // Creamos una pila para este dispositivo
         char* device = config_devices[i_device];
+        int time = atoi(config_devices_time[i_device]);
         dictionary_put(io_queues, device, queue_create());
+        dictionary_put(io_times, device, time);
         // Creamos un semaforo para este dispositivo (para indicar que se puede popear)
         sem_t* io_sem = malloc(sizeof(io_sem));
         sem_init(io_sem, 0, 0);
@@ -176,7 +180,7 @@ void block_state(t_pcb* pcb, char* device, int arg)
     sem_t* io_sem = (sem_t*)dictionary_get(io_semaphores, device);
 
     queue_push(device_queue, io_data);
-    log_trace(logger, "Encolo en device %s", device);
+    log_trace(logger, "Encolo en dispositivo: %s", device);
     sem_post(io_sem);
 }
 
@@ -187,6 +191,7 @@ void* handle_io(void* arg)
     log_trace(logger, "Se crea hilo para cola de %s", device);
     t_queue* device_queue = (t_queue*)dictionary_get(io_queues, device);
     sem_t* io_sem = (sem_t*)dictionary_get(io_semaphores, device);
+    int time = (int)dictionary_get(io_times, device);
     
     while(true) {
         sem_wait(io_sem);
@@ -217,8 +222,8 @@ void* handle_io(void* arg)
             // Espero a que la consola me confirme que llego una pantalla
             recv_and_validate_op_code_is(pcb->socket_consola, PANTALLA);
         } else {
-            log_debug(logger, "Dispositivo %s usado por %i", device, io_data->pcb->id);
-            sleep(io_data->arg);
+            log_debug(logger, "Dispositivo %s usado por PID: %i", device, io_data->pcb->id);
+            sleep(io_data->arg * time);
         }
         // Se termino de resolver el IO
         // Desbloqueamos el proceso
@@ -308,7 +313,6 @@ void wait_cpu_dispatch()
                 recv(socket_cpu_dispatch, &arg, sizeof(arg), 0);
                 log_info(logger, "PID: %i - Estado Anterior: EXECUTE - Estado Actual: BLOCKED", pcb->id);
                 log_info(logger, "PID: %i - Bloqueado por: %s", pcb->id, device);
-                log_trace(logger, "Con argumento: %i", arg);
                 // resolver la solicitud de i/o uno de los hilos
                 block_state(pcb, device, arg);
                 // acordarse de implentar un sem_post(&can_execute); al desbloquearse

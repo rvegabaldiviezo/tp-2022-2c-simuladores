@@ -7,15 +7,6 @@
  Description : Hello World in C, Ansi-style
  ============================================================================
 
- PARA EJECUTAR Y PROBAR LA CONSOLA:
- * ejecutar en la raiz del proyecto:
-bash run.sh consola ../../config/base/consola.config ../../config/base/program1.txt
-
- EXPLICACION DEL COMANDO:
- * Como primer argumento se pasa la direccion del archivo de config (todavia no se usa)
- * Como segundo argumento se para la direccion del archivo de instrucciones, cree un archivo
-   que es igual al que dieron como ejemplo
-
  */
 
 #include <stdio.h>

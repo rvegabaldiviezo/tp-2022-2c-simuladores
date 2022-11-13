@@ -146,7 +146,7 @@ FILE* open_stream(const char* path)
         exit(EXIT_FAILURE);
 	}
 
-	log_info(logger, "Se abrio el archivo de instrucciones");
+	log_trace(logger, "Se abrio el archivo de instrucciones");
 
     return instructions_stream;
 }
@@ -217,7 +217,7 @@ t_list* parse(const char* path)
         list_add(instructions, instruction);
     }
 
-	log_info(logger, "Se cierra el archivo de instrucciones");
+	log_trace(logger, "Se cierra el archivo de instrucciones");
     // cerramos el archivo por su puesto
     fclose(stream);
 
