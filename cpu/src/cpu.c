@@ -122,6 +122,7 @@ void instruction_cycle(){
 
 	while(true){
 		t_pcb* pcb = recv_pcb(socket_kernel_dispatch);
+		interruption_quantum = NO_INTERRUPT;
 		pcb->interrupt_type = NO_INTERRUPT;
 		interruption_io_pf = NO_INTERRUPT;
 		log_trace(logger, "PCB RECIBIDO - Ciclo de instruccion ejecutando");
@@ -241,8 +242,6 @@ void instruction_cycle(){
 				send_pcb(socket_kernel_dispatch, pcb);
 				break;
 		}
-
-		interruption_quantum = NO_INTERRUPT;
 
 		log_pcb(logger, pcb);
 		log_trace(logger, "PCB ENVIADO - A la espera de otro proceso");
