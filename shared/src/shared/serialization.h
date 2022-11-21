@@ -7,6 +7,7 @@
 typedef enum {
     STRING,
     INSTRUCTIONS,
+    SEGMENTS,
     PCB,
     TECLADO,
     PANTALLA,
@@ -28,6 +29,8 @@ char* recv_string(int socket);
 
 void send_instructions(int socket, t_list* instructions);
 t_list* recv_instructions(int socket);
+void send_segments(int socket, t_list* segments);
+t_list* recv_segments(int socket);
 
 void send_pcb_io(int socket, t_pcb* pcb, char* device, int arg);
 void send_pcb(int socket, t_pcb* pcb);

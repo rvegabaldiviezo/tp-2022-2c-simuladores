@@ -224,12 +224,9 @@ void send_pcb_io(int socket, t_pcb* pcb, char* device, int arg)
     add_op_code(buffer, PCB);
     add_to_buffer(buffer, &pcb->id, sizeof(pcb->id));
     add_to_buffer(buffer, &pcb->interrupt_type, sizeof(pcb->interrupt_type));
-    add_to_buffer(buffer, &pcb->process_size, sizeof(pcb->process_size));
     add_to_buffer(buffer, &pcb->program_counter, sizeof(pcb->program_counter));
     add_registers(buffer, pcb->registers);
-    add_to_buffer(buffer, &pcb->page_table, sizeof(pcb->page_table));
     add_to_buffer(buffer, &pcb->socket_consola, sizeof(pcb->socket_consola));
-    add_to_buffer(buffer, &pcb->execution_time, sizeof(pcb->execution_time));
     add_instructions(buffer, pcb->instructions);
     add_string(buffer, device);
     add_to_buffer(buffer, &arg, sizeof(arg));
@@ -245,12 +242,9 @@ void send_pcb(int socket, t_pcb* pcb)
     add_op_code(buffer, PCB);
     add_to_buffer(buffer, &pcb->id, sizeof(pcb->id));
     add_to_buffer(buffer, &pcb->interrupt_type, sizeof(pcb->interrupt_type));
-    add_to_buffer(buffer, &pcb->process_size, sizeof(pcb->process_size));
     add_to_buffer(buffer, &pcb->program_counter, sizeof(pcb->program_counter));
     add_registers(buffer, pcb->registers);
-    add_to_buffer(buffer, &pcb->page_table, sizeof(pcb->page_table));
     add_to_buffer(buffer, &pcb->socket_consola, sizeof(pcb->socket_consola));
-    add_to_buffer(buffer, &pcb->execution_time, sizeof(pcb->execution_time));
     add_instructions(buffer, pcb->instructions);
 
     send_buffer(socket, buffer);
@@ -263,15 +257,12 @@ t_pcb* recv_pcb(int socket)
     t_pcb* pcb = malloc(sizeof(t_pcb));
     recv(socket, &pcb->id, sizeof(pcb->id), 0);
     recv(socket, &pcb->interrupt_type, sizeof(pcb->interrupt_type), 0);
-    recv(socket, &pcb->process_size, sizeof(pcb->process_size), 0);
     recv(socket, &pcb->program_counter, sizeof(pcb->program_counter), 0);
     recv(socket, &pcb->registers[AX], sizeof(uint32_t), 0);
     recv(socket, &pcb->registers[BX], sizeof(uint32_t), 0);
     recv(socket, &pcb->registers[CX], sizeof(uint32_t), 0);
     recv(socket, &pcb->registers[DX], sizeof(uint32_t), 0);
-    recv(socket, &pcb->page_table, sizeof(pcb->page_table), 0);
     recv(socket, &pcb->socket_consola, sizeof(pcb->socket_consola), 0);
-    recv(socket, &pcb->execution_time, sizeof(pcb->execution_time), 0);
     pcb->instructions = recv_instructions(socket);
 
     return pcb;
@@ -327,4 +318,32 @@ void send_pantalla_response(int socket)
     add_op_code(buffer, PANTALLA);
     send_buffer(socket, buffer);
     destroy_buffer(buffer);
+}
+void send_segments(int socket, t_list* segments)
+{
+    t_buffer* buffer = create_buffer();
+    add_op_code(buffer, SEGMENTS);
+
+    int segments_count = list_size(segments);
+    add_to_buffer(buffer, &segments_count, sizeof(segments_count));
+    for(int i = 0; i < segments_count; i++)
+    {
+        int segment = (int)list_get(segments, i);
+        add_to_buffer(buffer, &segment, sizeof(segment));
+    }
+    send_buffer(socket, buffer);
+    destroy_buffer(buffer);
+}
+t_list* recv_segments(int socket)
+{
+    recv_and_validate_op_code_is(socket, SEGMENTS);
+
+    int segments_count = recv_int(socket);
+    t_list* segments = list_create();
+    for(int i = 0; i < segments_count; i++)
+    {
+        int segment = recv_int(socket);
+        list_add(segments, segment);
+    }
+    return segments;
 }

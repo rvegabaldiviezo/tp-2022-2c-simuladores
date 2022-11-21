@@ -60,7 +60,8 @@ int main(int argc, char **argv)
 		int socket_consola = accept(socket_kernel, NULL, NULL);
 		log_trace(logger, "Conexion con consola: %i", socket_consola);
 		t_list* instructions = recv_instructions(socket_consola);
-		create_process(socket_consola, instructions);
+		t_list* segments = recv_segments(socket_consola);
+		create_process(socket_consola, instructions, segments);
 	}
 }
 
@@ -98,8 +99,10 @@ void initialize_sockets()
 }
 
 int process_count = 0;
-void create_process(int socket_consola, t_list* instructions)
+void create_process(int socket_consola, t_list* instructions, t_list* segments)
 {
+	// Comunicarse con la memoria y pedirle que genere las tablas de paginas para cada uno de los segmentos
+	// Luego guardar todo en pcb->segment_table
 	t_pcb* pcb = malloc(sizeof(t_pcb));
 	pcb->id = ++process_count;
 	pcb->interrupt_type = NO_INTERRUPT;
@@ -109,7 +112,13 @@ void create_process(int socket_consola, t_list* instructions)
 	pcb->registers[BX] = 0;
 	pcb->registers[CX] = 0;
 	pcb->registers[DX] = 0;
-	pcb->execution_time = 0.0;
+
+	int segments_count = list_size(segments);
+    for(int i = 0; i < segments_count; i++)
+    {
+        int segment = list_get(segments, i);
+		log_trace(logger, "Segment %i: %i", i, segment);
+    }
 
 	new_state(pcb);
 }

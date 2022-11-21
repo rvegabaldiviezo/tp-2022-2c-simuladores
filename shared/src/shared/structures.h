@@ -54,12 +54,9 @@ typedef struct {
 	int id;
 	// Agregar una nueva variable que defina razon de interrupt
 	t_interrupt_type interrupt_type;
-	unsigned int process_size;
 	unsigned int program_counter;
 	uint32_t registers[4];
-	unsigned int page_table;
 	int socket_consola;
-	double execution_time;
 	t_list* segment_table;
 	t_list* instructions;
 } t_pcb;

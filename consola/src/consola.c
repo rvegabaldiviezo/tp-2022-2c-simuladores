@@ -29,15 +29,30 @@ void destroy_instruction(void* instruction) {
 	list_destroy(((t_instruction*)instruction)->parameters);
 }
 
+t_list* get_segments_from_config()
+{
+	char** segments_temp = config_get_array_value(consola_config, "SEGMENTOS");
+	t_list* segments = list_create();
+
+	int i = 0;
+	while(segments_temp[i] != NULL) {
+		int segment = atoi(segments_temp[i]);
+		list_add(segments, segment);
+		log_trace(logger, "segment: %i", segment);
+		i++;
+	}
+
+	return segments;
+}
+
 int main(int argc, char **argv) {
 
 	char* consola_config_path = argv[1];
 	char* program_path = argv[2];
 
-	logger = log_create("consola.log", "consola", true, LOG_LEVEL_DEBUG);
+	logger = log_create("consola.log", "consola", true, LOG_LEVEL_TRACE);
 	// Obtengo la config de consola
 	consola_config = config_create(consola_config_path);
-
 
 	if(consola_config == NULL) {
 		log_error(logger, "No se pudo abrir la config de consola");
@@ -46,10 +61,14 @@ int main(int argc, char **argv) {
 
 	// Obtengo las instrucciones
 	t_list* instructions = parse(program_path);
+	// Obtengo los segmentos
+	t_list* segments = get_segments_from_config();
 
 	int socket_kernel = start_client_module("KERNEL");
 	// Envio las instrucciones al kernel
 	send_instructions(socket_kernel, instructions);
+	// Envio los segmentos leidos por config
+	send_segments(socket_kernel, segments);
 
 	log_trace(logger, "Envie a kernel las instrucciones");
 	log_instructions(logger, instructions);

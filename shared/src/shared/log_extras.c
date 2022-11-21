@@ -128,27 +128,21 @@ void log_pcb(t_log* logger, t_pcb* pcb)
 	log_rect(logger, "pcb", 
 		"pcb->id: %i \n"
 		"pcb->interrupt_type: %s \n"
-		"pcb->process_size: %i \n"
 		"pcb->program_counter: %i \n"
 		"pcb->register[%s]: %i \n"
 		"pcb->register[%s]: %i \n"
 		"pcb->register[%s]: %i \n"
 		"pcb->register[%s]: %i \n"
-		"pcb->page_table: %i \n"
 		"pcb->socket_consola: %i \n"
-		"pcb->execution_time: %f \n"
 		"pcb->instructions:", 
 		pcb->id, 
 		t_interrupt_type_string[pcb->interrupt_type],
-		pcb->process_size,
 		pcb->program_counter,
 		t_register_string[AX], pcb->registers[AX],
 		t_register_string[BX], pcb->registers[BX],
 		t_register_string[CX], pcb->registers[CX],
 		t_register_string[DX], pcb->registers[DX],
-		pcb->page_table,
-		pcb->socket_consola,
-		pcb->execution_time
+		pcb->socket_consola
 	);
 	log_instructions(logger, pcb->instructions);
 }
