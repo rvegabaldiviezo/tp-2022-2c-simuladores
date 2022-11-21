@@ -347,3 +347,28 @@ t_list* recv_segments(int socket)
     }
     return segments;
 }
+
+void send_memdata(int socket, int memory_size, int page_size)
+{
+    t_buffer* buffer = create_buffer();
+    add_to_buffer(buffer, &memory_size, sizeof(memory_size));
+    add_to_buffer(buffer, &page_size, sizeof(page_size));
+    send_buffer(socket, buffer);
+    destroy_buffer(buffer);
+}
+
+int recv_memory_size(int socket)
+{
+	int memory_size;
+	recv(socket, &memory_size, sizeof(memory_size), 0);
+	return memory_size;
+}
+
+int recv_page_size(int socket)
+{
+	int page_size;
+	recv(socket, &page_size, sizeof(page_size), 0);
+	return page_size;
+}
+
+

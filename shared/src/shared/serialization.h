@@ -38,7 +38,7 @@ t_pcb* recv_pcb(int socket);
 
 // Para poder recibir y enviar que hubo una interrupcion por quantum entre el kernel y la cpu
 // Desarrollado por ramon
-void send_interrupt(int socket); // falta implementar
+void send_interrupt(int socket);
 void recv_interrupt(int socket);
 
 // Kernel -> Consola
@@ -48,4 +48,8 @@ void send_exit(int socket);
 // Consola -> Kernel
 void send_teclado_response(int socket, int value);
 void send_pantalla_response(int socket);
+// Memoria -> CPU
+void send_memdata(int socket, int memory_size, int page_size);
+int recv_memory_size(int socket);
+int recv_page_size(int socket);
 #endif
