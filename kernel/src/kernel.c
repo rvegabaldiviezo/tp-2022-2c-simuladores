@@ -94,7 +94,7 @@ void initialize_sockets()
 {
 	socket_cpu_interrupt = start_client_module("CPU_INTERRUPT");
 	socket_cpu_dispatch = start_client_module("CPU_DISPATCH");
-	//socket_memoria = start_client_module("MEMORIA");
+	socket_memoria = start_client_module("MEMORIA_KERNEL");
 }
 
 int process_count = 0;

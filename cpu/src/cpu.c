@@ -21,7 +21,8 @@ int instruction_delay,
 	interruption_quantum,
 	interruption_io_pf,
 	socket_cpu_dispatch,
-	socket_kernel_dispatch;
+	socket_kernel_dispatch,
+	socket_memory;
 char* replace_tlb;
 pthread_t thread_interrupt;
 //sem_t sem_interrupt;
@@ -41,23 +42,23 @@ int main(int argc, char **argv) {
 
 	cpu_config = config_create(cpu_config_path);
 
-	// Obtengo datos de la config
-
-	replace_tlb = config_get_string_value(cpu_config, "REEMPLAZO_TLB");
-	log_trace(logger, "  REEMPLAZO_TLB: %s", replace_tlb);
-
-	inputs_tlb = config_get_int_value(cpu_config, "ENTRADAS_TLB");
-	log_trace(logger, "  ENTRADAS_TLB: %d", inputs_tlb);
-
-	instruction_delay = config_get_int_value(cpu_config, "RETARDO_INSTRUCCION");
-	log_trace(logger, "  RETARDO_INSTRUCCION: %i ms", instruction_delay);
-
 	// Error por si no se paso bien el argumento
 
 	if(cpu_config == NULL) {
 		log_error(logger, "No se pudo abrir la config de CPU");
 		exit(EXIT_FAILURE);
 	}
+
+	// Obtengo datos de la config
+
+	replace_tlb = config_get_string_value(cpu_config, "REEMPLAZO_TLB");
+	log_trace(logger, "REEMPLAZO_TLB: %s", replace_tlb);
+
+	inputs_tlb = config_get_int_value(cpu_config, "ENTRADAS_TLB");
+	log_trace(logger, "ENTRADAS_TLB: %d", inputs_tlb);
+
+	instruction_delay = config_get_int_value(cpu_config, "RETARDO_INSTRUCCION");
+	log_trace(logger, "RETARDO_INSTRUCCION: %i ms", instruction_delay);
 
 	//INITIALIZE VALUES
 	interruption_quantum = NO_INTERRUPT;
@@ -96,6 +97,8 @@ void* start_interrupt(void* arg) {
 void connections(){
 
 	// CONECTAR A MEMORIA
+
+	socket_memory = start_client_module("MEMORIA_CPU");
 
 	// CONECTAR A KERNEL
 
