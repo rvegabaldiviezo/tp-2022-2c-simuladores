@@ -12,6 +12,9 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <semaphore.h>
 #include <commons/log.h>
 #include <commons/config.h>
 #include <shared/log_extras.h>
@@ -19,106 +22,98 @@
 #include <shared/structures_translation.h>
 #include <shared/serialization.h>
 #include <shared/socket.h>
-#include <shared/environment_variables.h>
-#include <pthread.h>
-#include <semaphore.h>
+#include "memoria.h"
+#include "handle_kernel.h"
+#include "handle_cpu.h"
 
 t_log* logger;
-t_config* memoria_config;
+t_config* config;
+// Config
+t_memoria_config* memoria_config;
 
-int memory_size,
-	page_size,
-	inputs_table,
-	memory_delay,
-	frames_per_process,
-	swap_delay,
-	swap_size,
-	socket_memoria_cpu,
-	socket_cpu,
-	socket_memoria_kernel,
-	socket_kernel;
-char* replace_algorithm;
-char* path_swap;
+// Sockets
+int socket_cpu;
+int socket_kernel;
 
-int main(int argc, char **argv) {
+// Threads
+pthread_t thread_cpu;
 
-	// Logger
+// Estructuras de la memoria
+void* ram;
+FILE* swap;
+t_list* page_tables;
 
-	logger = log_create("memoria.log", "CPU", true, LOG_LEVEL_TRACE);
+int main(int argc, char **argv) 
+{
+	initialize_logger(argv);
+	initialize_config(argv);
+	initialize_sockets();
+	initialize_memory_structures();
 
-	// Config Path
-
-	char* memoria_config_path = argv[1];
-	log_trace(logger,"%s",memoria_config_path);
-	// Config
-
-	memoria_config = config_create(memoria_config_path);
-	log_trace(logger,"asd");
-
-	if(memoria_config == NULL) {
-			log_error(logger, "No se pudo abrir la config de CPU");
-			exit(EXIT_FAILURE);
-	}
-
-	// Datos de config
-
-	memory_size = config_get_int_value(memoria_config, "TAM_MEMORIA");
-	log_trace(logger, "TAMANIO_MEMORIA: %i", memory_size);
-
-	page_size = config_get_int_value(memoria_config, "TAM_PAGINA");
-	log_trace(logger, "TAMANIO_PAGINA: %i", page_size);
-
-	inputs_table = config_get_int_value(memoria_config, "ENTRADAS_POR_TABLA");
-	log_trace(logger, "ENTRADAS_POR_TABLA: %i", inputs_table);
-
-	memory_delay = config_get_int_value(memoria_config, "RETARDO_MEMORIA");
-	log_trace(logger, "RETARDO_MEMORIA: %i", memory_delay);
-
-	replace_algorithm = config_get_string_value(memoria_config, "ALGORITMO_REEMPLAZO");
-	log_trace(logger, "ALGORITMO_REEMPLAZO: %s", replace_algorithm);
-
-	frames_per_process = config_get_int_value(memoria_config, "MARCOS_POR_PROCESO");
-	log_trace(logger, "MARCOS_POR_PROCESO: %i", frames_per_process);
-
-	swap_delay = config_get_int_value(memoria_config, "RETARDO_SWAP");
-	log_trace(logger, "RETARDO_SWAP: %i", swap_delay);
-
-	path_swap = config_get_string_value(memoria_config, "PATH_SWAP");
-	log_trace(logger, "PATH_SWAP: %s", path_swap);
-
-	swap_size = config_get_int_value(memoria_config, "TAMANIO_SWAP");
-	log_trace(logger, "TAMANIO_SWAP: %i", swap_size);
-
-	// Conexion de Servidor con CPU
-
-	socket_memoria_cpu = start_server_module("MEMORIA_CPU");
-	log_trace(logger,"Esperando conexion con CPU desde MEMORIA");
-	socket_cpu = accept(socket_memoria_cpu, NULL, NULL);
-	log_trace(logger, "Conexion con kernel interrupt: %i", socket_cpu);
-
-	// Conexion de Servidor con Kernel
-
-	socket_memoria_kernel = start_server_module("MEMORIA_KERNEL");
-	log_trace(logger,"Esperando conexion con KERNEL desde MEMORIA");
-	socket_kernel = accept(socket_memoria_kernel, NULL, NULL);
-	log_trace(logger, "Conexion con kernel interrupt: %i", socket_kernel);
-
-	// Inserte programa aqui
-
-	send_memdata(socket_memoria_cpu, memory_size, page_size);  //handshake con cpu
-
-	/*Interaccion memoria-cpu
-	 *Hay dos tipos de acceso que puede hacer la cpu a memoria, por lo cual, habra que hacer recv de un op_code
-	 *y luego recibir los datos con el formato correspondiente. El primer caso es el acceso es cuando la tlb del
-	 *cpu hace TLB miss, por lo tanto hay que retornarle PID, SEG, PAG, FRAME para que lo guarde en su tlb. El otro
-	 *tipo de acceso es cuando hay TLB Hit, donde se reciben los datos que tiene la tlb y se debe retornar el valor.
-	 */
+	// Thread para manejar la comunicacion con cpu
+	pthread_create(&thread_cpu, NULL, handle_cpu, NULL);
+	// Manejo el kernel en el main thread
+	handle_kernel();
 
 	// Destruyo todo todito
-
-	config_destroy(memoria_config);
+	free(memoria_config);
+	config_destroy(config);
 	log_destroy(logger);
 
 	return EXIT_SUCCESS;
+}
+
+void initialize_logger(char **argv)
+{
+	logger = log_create("memoria.log", "memoria", true, LOG_LEVEL_TRACE);
+}
+
+void initialize_sockets()
+{
+	// Conexion de Servidor con CPU
+	int socket_memoria_cpu = start_server_module("MEMORIA_CPU");
+	log_trace(logger,"Esperando conexion con CPU desde MEMORIA");
+	socket_cpu = accept(socket_memoria_cpu, NULL, NULL);
+	log_trace(logger, "Conexion con cpu: %i", socket_cpu);
+
+	// Conexion de Servidor con Kernel
+	int socket_memoria_kernel = start_server_module("MEMORIA_KERNEL");
+	log_trace(logger,"Esperando conexion con KERNEL desde MEMORIA");
+	socket_kernel = accept(socket_memoria_kernel, NULL, NULL);
+	log_trace(logger, "Conexion con kernel: %i", socket_kernel);
+}
+
+void initialize_config(char **argv)
+{
+	// Config Path
+	char* memoria_config_path = argv[1];
+
+	config = config_create(memoria_config_path);
+
+	if(config == NULL) {
+		log_error(logger, "No se pudo abrir la config de memoria");
+		exit(EXIT_FAILURE);
+	}
+
+	// Datos de config
+	memoria_config = (t_memoria_config*)malloc(sizeof(t_memoria_config));
+
+	memoria_config->memory_size = config_get_int_value(config, "TAM_MEMORIA");
+	memoria_config->page_size = config_get_int_value(config, "TAM_PAGINA");
+	memoria_config->inputs_table = config_get_int_value(config, "ENTRADAS_POR_TABLA");
+	memoria_config->memory_delay = config_get_int_value(config, "RETARDO_MEMORIA");
+	memoria_config->replace_algorithm = config_get_string_value(config, "ALGORITMO_REEMPLAZO");
+	memoria_config->frames_per_process = config_get_int_value(config, "MARCOS_POR_PROCESO");
+	memoria_config->swap_delay = config_get_int_value(config, "RETARDO_SWAP");
+	memoria_config->path_swap = config_get_string_value(config, "PATH_SWAP");
+	memoria_config->swap_size = config_get_int_value(config, "TAMANIO_SWAP");
+}
+
+void initialize_memory_structures()
+{
+	ram = malloc(memoria_config->memory_size);
+	swap = fopen(memoria_config->path_swap, "w+");
+	ftruncate(memoria_config->path_swap, memoria_config->swap_size);
+	page_tables = list_create();
 }
 

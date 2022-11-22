@@ -298,7 +298,7 @@ void send_pantalla(int socket, int value)
 void send_exit(int socket)
 {
     t_buffer* buffer = create_buffer();
-    add_op_code(buffer, EXIT_EXECUTION);
+    add_op_code(buffer, PROCESS_FINISHED);
     send_buffer(socket, buffer);
     destroy_buffer(buffer);
 }
@@ -371,4 +371,106 @@ int recv_page_size(int socket)
 	return page_size;
 }
 
+void send_process_started(int socket, t_list* segments)
+{
+    t_buffer* buffer = create_buffer();
+    add_op_code(buffer, PROCESS_STARTED);
+    int segments_count = list_size(segments);
+    add_to_buffer(buffer, &segments_count, sizeof(segments_count));
+    for(int i = 0; i < segments_count; i++)
+    {
+        int segment = (int)list_get(segments, i);
+        add_to_buffer(buffer, &segment, sizeof(segment));
+    }
+    send_buffer(socket, buffer);
+    destroy_buffer(buffer);
+}
+t_list* recv_process_started(int socket)
+{
+    int segments_count = recv_int(socket);
+    t_list* segments = list_create();
+    for(int i = 0; i < segments_count; i++)
+    {
+        int segment = recv_int(socket);
+        list_add(segments, segment);
+    }
+    return segments;
+}
+void send_process_finished(int socket, t_list* segments)
+{
+    t_buffer* buffer = create_buffer();
+    add_op_code(buffer, PROCESS_FINISHED);
+    int segments_count = list_size(segments);
+    add_to_buffer(buffer, &segments_count, sizeof(segments_count));
+    for(int i = 0; i < segments_count; i++)
+    {
+        t_segment* segment = (t_segment*)list_get(segments, i);
+        add_to_buffer(buffer, &segment->size, sizeof(segment->size));
+        add_to_buffer(buffer, &segment->page_table_index, sizeof(segment->page_table_index));
+    }
+    send_buffer(socket, buffer);
+    destroy_buffer(buffer);
+}
+t_list* recv_process_finished(int socket)
+{
+    int segments_count = recv_int(socket);
+    t_list* segments = list_create();
+    for(int i = 0; i < segments_count; i++)
+    {
+        t_segment* segment = (t_segment*)malloc(sizeof(t_segment));
+        segment->size = recv_int(socket);
+        segment->page_table_index = recv_int(socket);
+        list_add(segments, segment);
+    }
+    return segments;
+}
+// resolve -> aun no resuelto (resolvelo)
+void send_page_fault_resolve(int socket, int segment, int page)
+{
+    t_buffer* buffer = create_buffer();
+    add_op_code(buffer, PAGE_FAULT);
+    add_to_buffer(buffer, &segment, sizeof(segment));
+    add_to_buffer(buffer, &page, sizeof(page));
+    send_buffer(socket, buffer);
+    destroy_buffer(buffer);
+}
+
+// Memoria -> Kernel
+void send_segment_table(int socket, t_list* segments)
+{
+    t_buffer* buffer = create_buffer();
+    add_op_code(buffer, PROCESS_STARTED);
+    int segments_count = list_size(segments);
+    add_to_buffer(buffer, &segments_count, sizeof(segments_count));
+    for(int i = 0; i < segments_count; i++)
+    {
+        t_segment* segment = (t_segment*)list_get(segments, i);
+        add_to_buffer(buffer, &segment->size, sizeof(segment->size));
+        add_to_buffer(buffer, &segment->page_table_index, sizeof(segment->page_table_index));
+    }
+    send_buffer(socket, buffer);
+    destroy_buffer(buffer);
+}
+t_list* recv_segment_table(int socket)
+{
+    recv_and_validate_op_code_is(socket, PROCESS_STARTED);
+    int segments_count = recv_int(socket);
+    t_list* segments = list_create();
+    for(int i = 0; i < segments_count; i++)
+    {
+        t_segment* segment = (t_segment*)malloc(sizeof(t_segment));
+        segment->size = recv_int(socket);
+        segment->page_table_index = recv_int(socket);
+        list_add(segments, segment);
+    }
+    return segments;
+}
+// resolved -> resuelto 
+void send_page_fault_resolved(int socket)
+{
+    t_buffer* buffer = create_buffer();
+    add_op_code(buffer, PAGE_FAULT_RESOLVED);
+    send_buffer(socket, buffer);
+    destroy_buffer(buffer);
+}
 

@@ -4,12 +4,18 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../src/handle_cpu.c \
+../src/handle_kernel.c \
 ../src/memoria.c 
 
 C_DEPS += \
+./src/handle_cpu.d \
+./src/handle_kernel.d \
 ./src/memoria.d 
 
 OBJS += \
+./src/handle_cpu.o \
+./src/handle_kernel.o \
 ./src/memoria.o 
 
 
@@ -25,7 +31,7 @@ src/%.o: ../src/%.c src/subdir.mk
 clean: clean-src
 
 clean-src:
-	-$(RM) ./src/memoria.d ./src/memoria.o
+	-$(RM) ./src/handle_cpu.d ./src/handle_cpu.o ./src/handle_kernel.d ./src/handle_kernel.o ./src/memoria.d ./src/memoria.o
 
 .PHONY: clean-src
 

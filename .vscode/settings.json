@@ -27,7 +27,11 @@
     "semaphore.h": "c",
     "stdint.h": "c",
     "unistd.h": "c",
-    "type_traits": "c"
+    "type_traits": "c",
+    "memoria.h": "c",
+    "handle_cpu.h": "c",
+    "handle_kernel.h": "c",
+    "stdbool.h": "c"
   },
   "C_Cpp.errorSquiggles": "Disabled"
 }

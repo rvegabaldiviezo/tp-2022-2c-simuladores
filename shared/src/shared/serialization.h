@@ -11,7 +11,12 @@ typedef enum {
     PCB,
     TECLADO,
     PANTALLA,
-    EXIT_EXECUTION
+    PROCESS_STARTED,
+    PROCESS_FINISHED,
+    PAGE_FAULT,
+    PAGE_FAULT_RESOLVED,
+    PAGE_TABLE_ACCESS,
+    RAM_ACCESS
 } op_code;
 
 typedef struct {
@@ -52,4 +57,20 @@ void send_pantalla_response(int socket);
 void send_memdata(int socket, int memory_size, int page_size);
 int recv_memory_size(int socket);
 int recv_page_size(int socket);
+
+// Kernel -> Memoria
+void send_process_started(int socket, t_list* segments);
+t_list* recv_process_started(int socket);
+void send_process_finished(int socket, t_list* segments);
+t_list* recv_process_finished(int socket);
+// resolve -> aun no resuelto 
+void send_page_fault_resolve(int socket, int segment, int page);
+
+// Memoria -> Kernel
+void send_segment_table(int socket, t_list* segments);
+t_list* recv_segment_table(int socket);
+// resolved -> resuelto 
+void send_page_fault_resolved(int socket);
+
+
 #endif

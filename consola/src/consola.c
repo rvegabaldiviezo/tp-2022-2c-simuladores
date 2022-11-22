@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
 			send_pantalla_response(socket_kernel);
 			break;
 
-		case EXIT_EXECUTION:
+		case PROCESS_FINISHED:
 		default:
 			log_trace(logger, "Fianlizo la ejecucion de consola...");
 			goto exit_cycle;
@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
 	}
 	exit_cycle: ;
 
-	// Hay que liberar la memoria de lo que se reservo
+	// Hay que liberar la memoria_config de lo que se reservo
 	list_destroy_and_destroy_elements(instructions, &destroy_instruction);
 	log_destroy(logger);
 	config_destroy(consola_config);
