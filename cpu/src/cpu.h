@@ -12,6 +12,7 @@
 #include <shared/environment_variables.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <math.h>
 
 #ifndef __CPU_H
 #define __CPU_H
@@ -40,6 +41,12 @@ void set_execute(t_pcb* pcb, t_register reg1, uint32_t param1);
 
 void add_execute(t_pcb* pcb, t_register reg1, t_register reg2);
 
-// void mov_in_execute(t_pcb* pcb, t_register reg1, uint32_t param1);
+void mov_in_execute(t_list* tlb, t_pcb* pcb, t_register reg1, uint32_t param1);
 
+void mov_out_execute(t_list* tlb, t_pcb* pcb, uint32_t param1, t_register reg1);
 
+int check_tlb(t_list* tlb, int process_id, int segment_num, int page_num);
+
+void request_data_in(int frame, int page_offset, t_pcb* pcb, t_register reg1);
+
+void request_data_out(int frame, int page_offset, t_pcb* pcb, t_register reg1);

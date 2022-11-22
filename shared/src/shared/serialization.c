@@ -348,28 +348,6 @@ t_list* recv_segments(int socket)
     return segments;
 }
 
-void send_memdata(int socket, int memory_size, int page_size)
-{
-    t_buffer* buffer = create_buffer();
-    add_to_buffer(buffer, &memory_size, sizeof(memory_size));
-    add_to_buffer(buffer, &page_size, sizeof(page_size));
-    send_buffer(socket, buffer);
-    destroy_buffer(buffer);
-}
-
-int recv_memory_size(int socket)
-{
-	int memory_size;
-	recv(socket, &memory_size, sizeof(memory_size), 0);
-	return memory_size;
-}
-
-int recv_page_size(int socket)
-{
-	int page_size;
-	recv(socket, &page_size, sizeof(page_size), 0);
-	return page_size;
-}
 
 void send_process_started(int socket, t_list* segments)
 {
@@ -473,4 +451,147 @@ void send_page_fault_resolved(int socket)
     send_buffer(socket, buffer);
     destroy_buffer(buffer);
 }
+
+int recv_request_code(int socket){
+	int request_code;
+	recv(socket, &request_code, sizeof(request_code), 0);
+	return request_code;
+}
+
+int recv_offset(int socket){
+	int offset;
+	recv(socket, &offset, sizeof(offset), 0);
+	return offset;
+}
+
+int recv_request_pid(int socket){
+	int request_pid;
+	recv(socket, &request_pid, sizeof(request_pid), 0);
+	return request_pid;
+}
+
+int recv_request_segment(int socket){
+	int request_segment;
+	recv(socket, &request_segment, sizeof(request_segment), 0);
+	return request_segment;
+}
+
+int recv_request_page(int socket){
+	int request_page;
+	recv(socket, &request_page, sizeof(request_page), 0);
+	return request_page;
+}
+
+uint32_t recv_reg(int socket){
+	uint32_t reg;
+	recv(socket, &reg, sizeof(reg), 0);
+	return reg;
+}
+
+void send_memdata(int socket, int memory_size, int page_size)
+{
+    t_buffer* buffer = create_buffer();
+    add_to_buffer(buffer, &memory_size, sizeof(memory_size));
+    add_to_buffer(buffer, &page_size, sizeof(page_size));
+    send_buffer(socket, buffer);
+    destroy_buffer(buffer);
+}
+
+void send_memory_value(int socket, uint32_t value){
+	t_buffer* buffer = create_buffer();
+	add_to_buffer(buffer, &value, sizeof(value));
+	send_buffer(socket, buffer);
+	destroy_buffer(buffer);
+}
+
+void send_mov_out_ok(int socket){
+	int dummy = 1;
+	send(socket, &dummy, sizeof(dummy), 0);
+}
+
+void send_mem_code(int socket, int code){
+	t_buffer* buffer = create_buffer();
+	add_to_buffer(buffer, &code, sizeof(code));
+	send_buffer(socket, buffer);
+	destroy_buffer(buffer);
+}
+
+void send_frame(int socket, int frame){
+	t_buffer* buffer = create_buffer();
+	add_to_buffer(buffer, &frame, sizeof(frame));
+	send_buffer(socket, buffer);
+	destroy_buffer(buffer);
+}
+
+int recv_memory_size(int socket)
+{
+	int memory_size;
+	recv(socket, &memory_size, sizeof(memory_size), 0);
+	return memory_size;
+}
+
+int recv_page_size(int socket)
+{
+	int page_size;
+	recv(socket, &page_size, sizeof(page_size), 0);
+	return page_size;
+}
+
+int recv_mem_code(int socket){
+	int mem_code;
+	recv(socket, &mem_code, sizeof(mem_code), 0);
+	return mem_code;
+}
+
+int recv_frame(int socket){
+	int frame;
+	recv(socket, &frame, sizeof(frame), 0);
+	return frame;
+}
+
+void recv_mov_out_ok(int socket){
+	int dummy;
+	recv(socket, &dummy, sizeof(dummy), 0);
+}
+
+uint32_t recv_memory_value(int socket){
+	uint32_t value;
+	recv(socket, &value, sizeof(value), 0);
+	return value;
+}
+
+void send_frame_offset(int socket, int frame, int page_offset){
+	t_buffer* buffer = create_buffer();
+	int code = 0;
+	add_to_buffer(buffer, &code, sizeof(code));
+	add_to_buffer(buffer, &frame, sizeof(frame));
+	add_to_buffer(buffer, &page_offset, sizeof(page_offset));
+	send_buffer(socket, buffer);
+	destroy_buffer(buffer);
+}
+
+void send_frame_offset_reg(int socket, int frame, int page_offset, uint32_t reg1){
+	t_buffer* buffer = create_buffer();
+	int code = 1;
+	add_to_buffer(buffer, &code, sizeof(code));
+	add_to_buffer(buffer, &frame, sizeof(frame));
+	add_to_buffer(buffer, &page_offset, sizeof(page_offset));
+	add_to_buffer(buffer, &reg1, sizeof(reg1));
+	send_buffer(socket, buffer);
+	destroy_buffer(buffer);
+}
+
+void send_frame_request(int socket, int pid, int segment_num, int page_num){
+	t_buffer* buffer = create_buffer();
+	int code = 2;
+	add_to_buffer(buffer, &code, sizeof(code));
+	add_to_buffer(buffer, &pid, sizeof(pid));
+	add_to_buffer(buffer, &segment_num, sizeof(segment_num));
+	add_to_buffer(buffer, &page_num, sizeof(page_num));
+	send_buffer(socket, buffer);
+	destroy_buffer(buffer);
+}
+
+
+
 

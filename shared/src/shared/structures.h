@@ -42,7 +42,8 @@ typedef enum {
     INT_IO,
 	INT_PAGE_FAULT,
     EXECUTION_FINISHED,
-	NO_INTERRUPT
+	NO_INTERRUPT,
+	SEGMENTATION_FAULT
 } t_interrupt_type;
 
 typedef struct {

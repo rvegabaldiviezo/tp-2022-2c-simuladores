@@ -12,9 +12,43 @@ void* handle_cpu(void* arg)
 	/*Interaccion memoria-cpu
 	 *Hay dos tipos de acceso que puede hacer la cpu a memoria, por lo cual, habra que hacer recv de un op_code
 	 *y luego recibir los datos con el formato correspondiente. El primer caso es el acceso es cuando la tlb del
-	 *cpu hace TLB miss, por lo tanto hay que retornarle PID, SEG, PAG, FRAME para que lo guarde en su tlb. El otro
+	 *cpu hace TLB miss, por lo tanto hay que retornarle FRAME segun PID, SEG, PAG para que lo guarde en su tlb. El otro
 	 *tipo de acceso es cuando hay TLB Hit, donde se reciben los datos que tiene la tlb y se debe retornar el valor.
 	 */
 	log_trace(logger, "Envio a la CPU memory_size: %i y page_size: %i", memoria_config->memory_size, memoria_config->page_size);
 	send_memdata(socket_cpu, memoria_config->memory_size, memoria_config->page_size);  //handshake con cpu
+	while(true){
+
+		int code = recv_request_code(socket_cpu);
+		int frame,
+			offset,
+			pid,
+			segment,
+			page;
+		uint32_t reg;
+
+		switch(code){
+		case 0:
+			uint32_t value = 20; // valor random generico
+			frame = recv_frame(socket_cpu);
+			offset = recv_offset(socket_cpu);
+			send_memory_value(socket_cpu, value);
+			break;
+		case 1:
+			frame = recv_frame(socket_cpu);
+			offset = recv_offset(socket_cpu);
+			reg = recv_reg(socket_cpu);
+			send_mov_out_ok(socket_cpu);
+			break;
+		case 2:
+			int code = 0; // 0 - existe, 1 - pf
+			int frame = 25; // valor random generico
+			pid = recv_request_pid(socket_cpu);
+			segment = recv_request_segment(socket_cpu);
+			page = recv_request_page(socket_cpu);
+			send_mem_code(socket_cpu, code);
+			send_frame(socket_cpu, frame);
+			break;
+		}
+	}
 }

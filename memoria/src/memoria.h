@@ -21,8 +21,8 @@ typedef struct
 } t_page_table_data;
 
 
-void initialize_logger(char **argv);
-void initialize_config(char **argv);
+void initialize_logger(argv);
+void initialize_config(argv);
 void initialize_sockets();
 void initialize_memory_structures();
 void handle_kernel();
