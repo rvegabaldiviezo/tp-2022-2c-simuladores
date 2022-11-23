@@ -113,6 +113,17 @@ void add_instructions(t_buffer* buffer, t_list* instructions)
         }
     }
 }
+add_segment_table(t_buffer* buffer, t_list* segments)
+{
+    int segments_count = list_size(segments);
+    add_to_buffer(buffer, &segments_count, sizeof(segments_count));
+    for(int i = 0; i < segments_count; i++)
+    {
+        t_segment* segment = (t_segment*)list_get(segments, i);
+        add_to_buffer(buffer, &segment->size, sizeof(segment->size));
+        add_to_buffer(buffer, &segment->page_table_index, sizeof(segment->page_table_index));
+    }
+}
 
 void add_registers(t_buffer* buffer, t_register* registers)
 {
@@ -227,6 +238,7 @@ void send_pcb_io(int socket, t_pcb* pcb, char* device, int arg)
     add_to_buffer(buffer, &pcb->program_counter, sizeof(pcb->program_counter));
     add_registers(buffer, pcb->registers);
     add_to_buffer(buffer, &pcb->socket_consola, sizeof(pcb->socket_consola));
+    add_segment_table(buffer, pcb->segment_table);
     add_instructions(buffer, pcb->instructions);
     add_string(buffer, device);
     add_to_buffer(buffer, &arg, sizeof(arg));
@@ -245,6 +257,7 @@ void send_pcb(int socket, t_pcb* pcb)
     add_to_buffer(buffer, &pcb->program_counter, sizeof(pcb->program_counter));
     add_registers(buffer, pcb->registers);
     add_to_buffer(buffer, &pcb->socket_consola, sizeof(pcb->socket_consola));
+    add_segment_table(buffer, pcb->segment_table);
     add_instructions(buffer, pcb->instructions);
 
     send_buffer(socket, buffer);
@@ -263,6 +276,7 @@ t_pcb* recv_pcb(int socket)
     recv(socket, &pcb->registers[CX], sizeof(uint32_t), 0);
     recv(socket, &pcb->registers[DX], sizeof(uint32_t), 0);
     recv(socket, &pcb->socket_consola, sizeof(pcb->socket_consola), 0);
+    pcb->segment_table = recv_segment_table(socket);
     pcb->instructions = recv_instructions(socket);
 
     return pcb;
@@ -349,10 +363,11 @@ t_list* recv_segments(int socket)
 }
 
 
-void send_process_started(int socket, t_list* segments)
+void send_process_started(int socket, int pid, t_list* segments)
 {
     t_buffer* buffer = create_buffer();
     add_op_code(buffer, PROCESS_STARTED);
+    add_to_buffer(buffer, &pid, sizeof(pid));
     int segments_count = list_size(segments);
     add_to_buffer(buffer, &segments_count, sizeof(segments_count));
     for(int i = 0; i < segments_count; i++)
@@ -374,15 +389,16 @@ t_list* recv_process_started(int socket)
     }
     return segments;
 }
-void send_process_finished(int socket, t_list* segments)
+void send_process_finished(int socket, int pid, t_list* segments_table)
 {
     t_buffer* buffer = create_buffer();
     add_op_code(buffer, PROCESS_FINISHED);
-    int segments_count = list_size(segments);
+    add_to_buffer(buffer, &pid, sizeof(pid));
+    int segments_count = list_size(segments_table);
     add_to_buffer(buffer, &segments_count, sizeof(segments_count));
     for(int i = 0; i < segments_count; i++)
     {
-        t_segment* segment = (t_segment*)list_get(segments, i);
+        t_segment* segment = (t_segment*)list_get(segments_table, i);
         add_to_buffer(buffer, &segment->size, sizeof(segment->size));
         add_to_buffer(buffer, &segment->page_table_index, sizeof(segment->page_table_index));
     }
@@ -403,10 +419,11 @@ t_list* recv_process_finished(int socket)
     return segments;
 }
 // resolve -> aun no resuelto (resolvelo)
-void send_page_fault_resolve(int socket, int segment, int page)
+void send_page_fault_resolve(int socket, int pid, int segment, int page)
 {
     t_buffer* buffer = create_buffer();
     add_op_code(buffer, PAGE_FAULT);
+    add_to_buffer(buffer, &pid, sizeof(pid));
     add_to_buffer(buffer, &segment, sizeof(segment));
     add_to_buffer(buffer, &page, sizeof(page));
     send_buffer(socket, buffer);
@@ -431,7 +448,6 @@ void send_segment_table(int socket, t_list* segments)
 }
 t_list* recv_segment_table(int socket)
 {
-    recv_and_validate_op_code_is(socket, PROCESS_STARTED);
     int segments_count = recv_int(socket);
     t_list* segments = list_create();
     for(int i = 0; i < segments_count; i++)
@@ -448,6 +464,13 @@ void send_page_fault_resolved(int socket)
 {
     t_buffer* buffer = create_buffer();
     add_op_code(buffer, PAGE_FAULT_RESOLVED);
+    send_buffer(socket, buffer);
+    destroy_buffer(buffer);
+}
+void send_process_finished_response(int socket)
+{
+    t_buffer* buffer = create_buffer();
+    add_op_code(buffer, PROCESS_FINISHED);
     send_buffer(socket, buffer);
     destroy_buffer(buffer);
 }

@@ -296,6 +296,10 @@ void wait_cpu_dispatch()
         // verificamos que hacer (porque nos envio el pcb la cpu)
         switch(pcb->interrupt_type) {
             case EXECUTION_FINISHED:
+                // avisamos a la memoria a que libere los datos del proceso
+                log_trace(logger, "segment_table: %i", list_size(pcb->segment_table));
+                send_process_finished(socket_memoria, pcb->id, pcb->segment_table);
+                recv_and_validate_op_code_is(socket_memoria, PROCESS_FINISHED);
                 // avisamos a la consola de que se finalizo el proceso
                 send_exit(pcb->socket_consola);
                 log_info(logger, "PID: %i - Estado Anterior: EXECUTE - Estado Actual: EXIT", pcb->id);

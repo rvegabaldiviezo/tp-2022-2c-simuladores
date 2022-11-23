@@ -76,17 +76,16 @@ void send_frame_offset(int socket, int frame, int page_offset);
 void send_frame_offset_reg(int socket, int frame, int page_offset, uint32_t reg1);
 void send_frame_request(int socket, int pid, int segment_num, int page_num);
 // Kernel -> Memoria
-void send_process_started(int socket, t_list* segments);
+void send_process_started(int socket, int pid, t_list* segments);
 t_list* recv_process_started(int socket);
-void send_process_finished(int socket, t_list* segments);
+void send_process_finished(int socket, int pid, t_list* segments_table);
 t_list* recv_process_finished(int socket);
-// resolve -> aun no resuelto 
-void send_page_fault_resolve(int socket, int segment, int page);
+void send_process_finished_response(int socket);
+void send_page_fault_resolve(int socket, int pid, int segment, int page); // resolve -> aun no resuelto 
 
 // Memoria -> Kernel
 void send_segment_table(int socket, t_list* segments);
 t_list* recv_segment_table(int socket);
-// resolved -> resuelto 
-void send_page_fault_resolved(int socket);
+void send_page_fault_resolved(int socket); // resolved -> resuelto 
 
 #endif

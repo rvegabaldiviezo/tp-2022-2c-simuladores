@@ -146,3 +146,22 @@ void log_pcb(t_log* logger, t_pcb* pcb)
 	);
 	log_instructions(logger, pcb->instructions);
 }
+
+void log_tlb(t_log* logger, t_list* tlb)
+{
+	for(int i = 0; i < list_size(tlb); i++) {
+		t_tlb* temp_tlb = list_get(tlb,i);
+		log_rect(logger, "tlb", 
+			"tlb->pid: %i \n"
+			"tlb->segment: %i \n"
+			"tlb->page: %i \n"
+			"tlb->frame: %i \n"
+			"tlb->time: %i \n",
+			temp_tlb->pid, 
+			temp_tlb->segment, 
+			temp_tlb->page, 
+			temp_tlb->frame, 
+			temp_tlb->time
+		);
+	}
+}

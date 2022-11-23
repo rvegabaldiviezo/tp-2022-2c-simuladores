@@ -62,4 +62,12 @@ typedef struct {
 	t_list* instructions;
 } t_pcb;
 
+typedef struct {
+	int pid;
+	int segment;
+	int page;
+	int frame;
+	int time;
+} t_tlb;
+
 #endif

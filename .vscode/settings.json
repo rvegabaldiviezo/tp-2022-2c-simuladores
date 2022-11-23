@@ -31,7 +31,8 @@
     "memoria.h": "c",
     "handle_cpu.h": "c",
     "handle_kernel.h": "c",
-    "stdbool.h": "c"
+    "stdbool.h": "c",
+    "cmath": "c"
   },
   "C_Cpp.errorSquiggles": "Disabled"
 }

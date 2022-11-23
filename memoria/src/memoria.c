@@ -17,6 +17,8 @@
 #include <semaphore.h>
 #include <commons/log.h>
 #include <commons/config.h>
+#include <commons/collections/list.h>
+#include <commons/collections/dictionary.h>
 #include <shared/log_extras.h>
 #include <shared/structures.h>
 #include <shared/structures_translation.h>
@@ -41,7 +43,10 @@ pthread_t thread_cpu;
 // Estructuras de la memoria
 void* ram;
 FILE* swap;
-t_list* page_tables;
+t_dictionary* page_tables_per_pid;
+// Key: PID, Value: lista de Tablas de Pagina
+// Key: Segmento, Value: Tabla de Pagina
+// Key: Pagina, Value: Marco
 
 int main(int argc, char **argv) 
 {
@@ -114,6 +119,6 @@ void initialize_memory_structures()
 	ram = malloc(memoria_config->memory_size);
 	swap = fopen(memoria_config->path_swap, "w+");
 	ftruncate(memoria_config->path_swap, memoria_config->swap_size);
-	page_tables = list_create();
+	page_tables_per_pid = dictionary_create();
 }
 

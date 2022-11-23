@@ -11,9 +11,10 @@ void* handle_cpu(void* arg)
 {
 	/*Interaccion memoria-cpu
 	 *Hay dos tipos de acceso que puede hacer la cpu a memoria, por lo cual, habra que hacer recv de un op_code
-	 *y luego recibir los datos con el formato correspondiente. El primer caso es el acceso es cuando la tlb del
-	 *cpu hace TLB miss, por lo tanto hay que retornarle FRAME segun PID, SEG, PAG para que lo guarde en su tlb. El otro
-	 *tipo de acceso es cuando hay TLB Hit, donde se reciben los datos que tiene la tlb y se debe retornar el valor.
+	 *y luego recibir los datos con el formato correspondiente. El primer tipo de acceso es cuando hay TLB Hit, 
+	 *donde se reciben los datos marco offset y posiblemente un valor dependiendo si es mov_in o mov_out (code 0:
+	 *mov in, code 1: mov out). El otro caso es el acceso cuando la tlb del cpu hace TLB miss, por lo tanto hay que
+	 *retornarle FRAME segun PID, SEG, PAG para que lo guarde en su tlb. 
 	 */
 	log_trace(logger, "Envio a la CPU memory_size: %i y page_size: %i", memoria_config->memory_size, memoria_config->page_size);
 	send_memdata(socket_cpu, memoria_config->memory_size, memoria_config->page_size);  //handshake con cpu

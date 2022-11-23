@@ -11,6 +11,7 @@ typedef struct
     char* replace_algorithm;
     char* path_swap;
 } t_memoria_config;
+
 typedef struct
 {
 	int frame;

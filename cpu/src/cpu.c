@@ -2,6 +2,7 @@
 
 t_log* logger;
 t_config* cpu_config;
+t_list* tlb;
 int instruction_delay,
 	interruption_quantum,
 	interruption_io_pf,
@@ -91,7 +92,7 @@ void connections(){
 
 void instruction_cycle(){
 
-	t_list* tlb = list_create(); // Creo la tlb
+	tlb = list_create(); // Creo la tlb
 
 	while(true){
 
@@ -137,13 +138,13 @@ void instruction_cycle(){
 					break;
 				case MOV_IN:
 
-					mov_in_execute(tlb, pcb, (t_register)param1->parameter, (uint32_t)param2->parameter);
+					mov_in_execute(pcb, (t_register)param1->parameter, (uint32_t)param2->parameter);
 					log_info(logger, "PID: %i - Ejecutando: %s - %s - %i", pcb->id, t_instruction_type_string[instruction_fetched->instruction], t_register_string[(int)param1->parameter], (int)param2->parameter);
 
 					break;
 				case MOV_OUT:
 
-					mov_out_execute(tlb, pcb, (uint32_t)param2->parameter, (t_register)param1->parameter);
+					mov_out_execute(pcb, (uint32_t)param2->parameter, (t_register)param1->parameter);
 					log_info(logger, "PID: %i - Ejecutando: %s - %i - %s", pcb->id, t_instruction_type_string[instruction_fetched->instruction], (int)param1->parameter, t_register_string[(int)param2->parameter]);
 
 					break;
@@ -238,7 +239,7 @@ void add_execute(t_pcb* pcb, t_register reg1, t_register reg2){
 
 
 
-void mov_in_execute(t_list* tlb, t_pcb* pcb, t_register reg1, uint32_t param1){
+void mov_in_execute(t_pcb* pcb, t_register reg1, uint32_t param1){
 	// MMU
 	int segment_max_size = memory_size * page_size;
 	int segment_num = floor(param1 / segment_max_size);
@@ -247,16 +248,16 @@ void mov_in_execute(t_list* tlb, t_pcb* pcb, t_register reg1, uint32_t param1){
 	int page_offset = segment_offset % page_size;
 	log_trace(logger,"Segment max size: %i", segment_max_size);
 	log_trace(logger,"Segment num: %i", segment_num);
-	log_trace(logger,"Segment segment offset: %i", segment_offset);
-	log_trace(logger,"Segment page_num: %i", page_num);
-	log_trace(logger,"Segment page offset: %i", page_offset);
+	log_trace(logger,"Segment offset: %i", segment_offset);
+	log_trace(logger,"Page num: %i", page_num);
+	log_trace(logger,"Page offset: %i", page_offset);
 	// Segmentation fault?
 	if(segment_offset > segment_max_size){
 		interruption_io_pf = SEGMENTATION_FAULT;
 	}
 	else{
 		//Check TLB
-		int frame = check_tlb(tlb, pcb->id, segment_num, page_num);
+		int frame = check_tlb(pcb->id, segment_num, page_num);
 		//1 o 2 accesos
 		if(frame != -1){
 			// Acceder a memoria por el dato
@@ -302,11 +303,12 @@ void mov_in_execute(t_list* tlb, t_pcb* pcb, t_register reg1, uint32_t param1){
 			}
 		}
 	}
+	log_tlb(logger, tlb);
 }
 
 
 
-void mov_out_execute(t_list* tlb, t_pcb* pcb, uint32_t param1, t_register reg1){
+void mov_out_execute(t_pcb* pcb, uint32_t param1, t_register reg1){
 	// MMU
 	int segment_max_size = memory_size * page_size;
 	int segment_num = floor(param1 / segment_max_size);
@@ -315,16 +317,16 @@ void mov_out_execute(t_list* tlb, t_pcb* pcb, uint32_t param1, t_register reg1){
 	int page_offset = segment_offset % page_size;
 	log_trace(logger,"Segment max size: %i", segment_max_size);
 	log_trace(logger,"Segment num: %i", segment_num);
-	log_trace(logger,"Segment segment offset: %i", segment_offset);
-	log_trace(logger,"Segment page_num: %i", page_num);
-	log_trace(logger,"Segment page offset: %i", page_offset);
+	log_trace(logger,"Segment offset: %i", segment_offset);
+	log_trace(logger,"Page num: %i", page_num);
+	log_trace(logger,"Page offset: %i", page_offset);
 	// Segmentation fault?
 	if(segment_offset > segment_max_size){
 		interruption_io_pf = SEGMENTATION_FAULT;
 	}
 	else{
 		//Check TLB
-		int frame = check_tlb(tlb, pcb->id, segment_num, page_num);
+		int frame = check_tlb(pcb->id, segment_num, page_num);
 		//1 o 2 accesos
 		if(frame != -1){
 			// Acceder a memoria por el dato
@@ -370,12 +372,13 @@ void mov_out_execute(t_list* tlb, t_pcb* pcb, uint32_t param1, t_register reg1){
 			}
 		}
 	}
+	log_tlb(logger, tlb);
 }
 
 
 
 
-int check_tlb(t_list* tlb, int process_id, int segment_num, int page_num){     // Retorna marco si esta en TLB, -1 si no.
+int check_tlb(int process_id, int segment_num, int page_num){     // Retorna marco si esta en TLB, -1 si no.
 	t_tlb* input_tlb;	//declaro variables locales
 	int frame = -1;
 	for(int i = 0;i<list_size(tlb);i++){	// itero sobre entradas en tlb

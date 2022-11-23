@@ -112,13 +112,9 @@ void create_process(int socket_consola, t_list* instructions, t_list* segments)
 	pcb->registers[BX] = 0;
 	pcb->registers[CX] = 0;
 	pcb->registers[DX] = 0;
-
-	int segments_count = list_size(segments);
-    for(int i = 0; i < segments_count; i++)
-    {
-        int segment = list_get(segments, i);
-		log_trace(logger, "Segment %i: %i", i, segment);
-    }
+	send_process_started(socket_memoria, pcb->id, segments);
+	recv_and_validate_op_code_is(socket_memoria, PROCESS_STARTED);
+	pcb->segment_table = recv_segment_table(socket_memoria);
 
 	new_state(pcb);
 }
