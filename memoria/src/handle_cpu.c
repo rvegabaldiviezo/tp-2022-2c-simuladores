@@ -1,4 +1,7 @@
 #include <commons/log.h>
+#include <commons/string.h>
+#include <commons/collections/list.h>
+#include <commons/collections/dictionary.h>
 #include <shared/structures.h>
 #include <shared/serialization.h>
 #include "memoria.h"
@@ -6,6 +9,10 @@
 extern t_log* logger;
 extern int socket_cpu;
 extern t_memoria_config* memoria_config;
+// Structures
+extern void* ram;
+extern FILE* swap;
+extern t_dictionary* page_tables_per_pid;
 
 void* handle_cpu(void* arg)
 {
@@ -19,49 +26,66 @@ void* handle_cpu(void* arg)
 	log_trace(logger, "Envio a la CPU memory_size: %i y page_size: %i", memoria_config->memory_size, memoria_config->page_size);
 	send_memdata(socket_cpu, memoria_config->memory_size, memoria_config->page_size);  //handshake con cpu
 
-	int counter = 0;
-	while(true){
+	while(true)
+	{
+		op_code op_code = recv_op_code(socket_cpu);
 
-		int code = recv_request_code(socket_cpu);
-		int frame,
-			offset,
-			pid,
-			segment,
-			page;
-		uint32_t reg;
+		switch (op_code)
+		{
+		case RAM_ACCESS_READ:
+			ram_access_read();
+			break;
+		
+		case RAM_ACCESS_WRITE:
+			ram_access_write();
+			break;
 
-		switch(code){
-		case 0:
-			uint32_t value = 20; // valor random generico
-			frame = recv_frame(socket_cpu);
-			offset = recv_offset(socket_cpu);
-			sleep(1);
-			send_memory_value(socket_cpu, value);
-			break;
-		case 1:
-			frame = recv_frame(socket_cpu);
-			offset = recv_offset(socket_cpu);
-			reg = recv_reg(socket_cpu);
-			sleep(1);
-			send_mov_out_ok(socket_cpu);
-			break;
-		case 2:
-			counter++;
-			if ((counter % 3) != 0){
-				int code = 0; // 0 - existe, 1 - pf
-				int frame = 25; // valor random generico
-				send_mem_code(socket_cpu, code);
-				send_frame(socket_cpu, frame);
-			}
-			else{
-				int code = 1; // 0 - existe, 1 - pf
-				send_mem_code(socket_cpu, code);
-			}
-			pid = recv_request_pid(socket_cpu);
-			segment = recv_request_segment(socket_cpu);
-			page = recv_request_page(socket_cpu);
-			sleep(1);
+		case FRAME_ACCESS:
+			frame_access();
 			break;
 		}
+		
+	}
+}
+
+void ram_access_read()
+{
+	int pid = recv_int(socket_cpu);
+	int frame = recv_int(socket_cpu);
+	int offset = recv_int(socket_cpu);
+
+	sleep(memoria_config->memory_delay);
+	send_read_response(socket_cpu, 2);
+}
+void ram_access_write()
+{
+	int pid = recv_int(socket_cpu);
+	int frame = recv_int(socket_cpu);
+	int offset = recv_int(socket_cpu);
+	int value = recv_int(socket_cpu);
+
+	sleep(memoria_config->memory_delay);
+	send_write_response(socket_cpu);
+}
+void frame_access()
+{
+	int pid = recv_int(socket_cpu);
+	int segment = recv_int(socket_cpu);
+	int page = recv_int(socket_cpu);
+
+	t_page_table_data* page_data = access_page(pid, segment, page);
+
+	sleep(memoria_config->memory_delay);
+
+	if(page_data->P == 1)
+	{
+		int frame = page_data->frame;
+		log_info(logger, "PID: %i - Página: %i - Marco: %i", pid, page, frame);
+		send_frame_response(socket_cpu, frame);
+	}
+	else
+	{
+		log_debug(logger, "Page Fault, PID: %i - Página: %i", pid, page);
+		send_page_fault(socket_cpu);
 	}
 }

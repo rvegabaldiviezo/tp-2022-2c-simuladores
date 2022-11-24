@@ -1,6 +1,7 @@
 #include <math.h>
 #include <commons/log.h>
 #include <commons/string.h>
+#include <commons/bitarray.h>
 #include <commons/collections/list.h>
 #include <commons/collections/dictionary.h>
 #include <shared/structures.h>
@@ -14,6 +15,7 @@ extern t_memoria_config* memoria_config;
 extern void* ram;
 extern FILE* swap;
 extern t_dictionary* page_tables_per_pid;
+extern t_bitarray* frames_usage;
 
 void handle_kernel()
 {
@@ -124,6 +126,43 @@ void resolve_page_fault()
     int page = recv_int(socket_kernel);
 
     log_debug(logger, "Comienzo de resolucion de Page Fault para PID: %i, Segment: %i, Page: %i", pid, segment, page);
+
+	t_page_table_data* page_data = access_page(pid, segment, page);
+
+    if(page_data->swap_pos == -1)
+    {
+        // No esta ni en disco
+        int frame = find_free_frame();
+    
+        if(frame == -1)
+        {
+            // La memoria esta llena
+            frame = swap_replace();
+        }
+
+        page_data->frame = frame;
+        page_data->P = 1;
+    }
+
     send_page_fault_resolved(socket_kernel);
     log_debug(logger, "Page Fault resuelto PID: %i, Segment: %i, Page: %i", pid, segment, page);
+}
+
+int find_free_frame()
+{
+    int frame = -1;
+    for(int i = 0; i < bitarray_get_max_bit(frames_usage); i++)
+    {
+        if(!bitarray_test_bit(frames_usage, i)) 
+        {
+            frame = i;
+            break;
+        }
+    }
+    return frame;
+}
+
+int swap_replace()
+{
+    
 }

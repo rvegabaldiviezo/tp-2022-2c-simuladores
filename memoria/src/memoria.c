@@ -17,8 +17,10 @@
 #include <semaphore.h>
 #include <commons/log.h>
 #include <commons/config.h>
+#include <commons/string.h>
 #include <commons/collections/list.h>
 #include <commons/collections/dictionary.h>
+#include <commons/bitarray.h>
 #include <shared/log_extras.h>
 #include <shared/structures.h>
 #include <shared/structures_translation.h>
@@ -44,6 +46,7 @@ pthread_t thread_cpu;
 void* ram;
 FILE* swap;
 t_dictionary* page_tables_per_pid;
+t_bitarray* frames_usage; // Frames usados 0 -> libre, 1 -> ocupado
 // Key: PID, Value: lista de Tablas de Pagina
 // Key: Segmento, Value: Tabla de Pagina
 // Key: Pagina, Value: Marco
@@ -106,10 +109,10 @@ void initialize_config(char **argv)
 	memoria_config->memory_size = config_get_int_value(config, "TAM_MEMORIA");
 	memoria_config->page_size = config_get_int_value(config, "TAM_PAGINA");
 	memoria_config->inputs_table = config_get_int_value(config, "ENTRADAS_POR_TABLA");
-	memoria_config->memory_delay = config_get_int_value(config, "RETARDO_MEMORIA");
+	memoria_config->memory_delay = config_get_int_value(config, "RETARDO_MEMORIA") * 0.001;
 	memoria_config->replace_algorithm = config_get_string_value(config, "ALGORITMO_REEMPLAZO");
 	memoria_config->frames_per_process = config_get_int_value(config, "MARCOS_POR_PROCESO");
-	memoria_config->swap_delay = config_get_int_value(config, "RETARDO_SWAP");
+	memoria_config->swap_delay = config_get_int_value(config, "RETARDO_SWAP") * 0.001;
 	memoria_config->path_swap = config_get_string_value(config, "PATH_SWAP");
 	memoria_config->swap_size = config_get_int_value(config, "TAMANIO_SWAP");
 }
@@ -120,5 +123,16 @@ void initialize_memory_structures()
 	swap = fopen(memoria_config->path_swap, "w+");
 	ftruncate(memoria_config->path_swap, memoria_config->swap_size);
 	page_tables_per_pid = dictionary_create();
+
+	int frames_count = memoria_config->page_size / memoria_config->memory_size;
+	frames_usage = bitarray_create_with_mode(malloc(frames_count), frames_count, LSB_FIRST);
 }
 
+t_page_table_data* access_page(int pid, int segment, int page)
+{
+	t_list* page_tables_per_segment = (t_list*)dictionary_get(page_tables_per_pid, string_itoa(pid));
+
+	t_list* page_table = (t_list*)list_get(page_tables_per_segment, segment);
+
+	return (t_page_table_data*)list_get(page_table, page);
+}

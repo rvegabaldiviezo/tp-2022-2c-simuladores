@@ -545,32 +545,6 @@ void send_memdata(int socket, int memory_size, int page_size)
     destroy_buffer(buffer);
 }
 
-void send_memory_value(int socket, uint32_t value){
-	t_buffer* buffer = create_buffer();
-	add_to_buffer(buffer, &value, sizeof(value));
-	send_buffer(socket, buffer);
-	destroy_buffer(buffer);
-}
-
-void send_mov_out_ok(int socket){
-	int dummy = 1;
-	send(socket, &dummy, sizeof(dummy), 0);
-}
-
-void send_mem_code(int socket, int code){
-	t_buffer* buffer = create_buffer();
-	add_to_buffer(buffer, &code, sizeof(code));
-	send_buffer(socket, buffer);
-	destroy_buffer(buffer);
-}
-
-void send_frame(int socket, int frame){
-	t_buffer* buffer = create_buffer();
-	add_to_buffer(buffer, &frame, sizeof(frame));
-	send_buffer(socket, buffer);
-	destroy_buffer(buffer);
-}
-
 int recv_memory_size(int socket)
 {
 	int memory_size;
@@ -608,38 +582,70 @@ uint32_t recv_memory_value(int socket){
 	return value;
 }
 
-void send_frame_offset(int socket, int frame, int page_offset){
+void send_frame_request(int socket, int pid, int segment, int page)
+{
 	t_buffer* buffer = create_buffer();
-	int code = 0;
-	add_to_buffer(buffer, &code, sizeof(code));
-	add_to_buffer(buffer, &frame, sizeof(frame));
-	add_to_buffer(buffer, &page_offset, sizeof(page_offset));
-	send_buffer(socket, buffer);
-	destroy_buffer(buffer);
-}
-
-void send_frame_offset_reg(int socket, int frame, int page_offset, uint32_t reg){
-	t_buffer* buffer = create_buffer();
-	int code = 1;
-	add_to_buffer(buffer, &code, sizeof(code));
-	add_to_buffer(buffer, &frame, sizeof(frame));
-	add_to_buffer(buffer, &page_offset, sizeof(page_offset));
-	add_to_buffer(buffer, &reg, sizeof(reg));
-	send_buffer(socket, buffer);
-	destroy_buffer(buffer);
-}
-
-void send_frame_request(int socket, int pid, int segment_num, int page_num){
-	t_buffer* buffer = create_buffer();
-	int code = 2;
-	add_to_buffer(buffer, &code, sizeof(code));
+	add_op_code(buffer, FRAME_ACCESS);
 	add_to_buffer(buffer, &pid, sizeof(pid));
-	add_to_buffer(buffer, &segment_num, sizeof(segment_num));
-	add_to_buffer(buffer, &page_num, sizeof(page_num));
+	add_to_buffer(buffer, &segment, sizeof(segment));
+	add_to_buffer(buffer, &page, sizeof(page));
 	send_buffer(socket, buffer);
 	destroy_buffer(buffer);
 }
 
+void send_write_request(int socket, int pid, int frame, int offset, int value)
+{
+	t_buffer* buffer = create_buffer();
+	add_op_code(buffer, RAM_ACCESS_WRITE);
+	add_to_buffer(buffer, &pid, sizeof(pid));
+	add_to_buffer(buffer, &frame, sizeof(frame));
+	add_to_buffer(buffer, &offset, sizeof(offset));
+	add_to_buffer(buffer, &value, sizeof(value));
+	send_buffer(socket, buffer);
+	destroy_buffer(buffer);
+}
+
+void send_read_request(int socket, int pid, int frame, int offset)
+{
+	t_buffer* buffer = create_buffer();
+	add_op_code(buffer, RAM_ACCESS_READ);
+	add_to_buffer(buffer, &pid, sizeof(pid));
+	add_to_buffer(buffer, &frame, sizeof(frame));
+	add_to_buffer(buffer, &offset, sizeof(offset));
+	send_buffer(socket, buffer);
+	destroy_buffer(buffer);
+}
+
+void send_frame_response(int socket, int frame)
+{
+	t_buffer* buffer = create_buffer();
+	add_op_code(buffer, FRAME_ACCESS);
+	add_to_buffer(buffer, &frame, sizeof(frame));
+	send_buffer(socket, buffer);
+	destroy_buffer(buffer);
+}
+void send_page_fault(int socket)
+{
+    t_buffer* buffer = create_buffer();
+	add_op_code(buffer, PAGE_FAULT);
+	send_buffer(socket, buffer);
+	destroy_buffer(buffer);
+}
+void send_write_response(int socket)
+{
+	t_buffer* buffer = create_buffer();
+	add_op_code(buffer, RAM_ACCESS_WRITE);
+	send_buffer(socket, buffer);
+	destroy_buffer(buffer);
+}
+void send_read_response(int socket, int value)
+{
+	t_buffer* buffer = create_buffer();
+	add_op_code(buffer, RAM_ACCESS_READ);
+	add_to_buffer(buffer, &value, sizeof(value));
+	send_buffer(socket, buffer);
+	destroy_buffer(buffer);
+}
 
 
 
