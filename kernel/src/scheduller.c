@@ -368,6 +368,8 @@ void wait_cpu_dispatch()
                 break;
             case SEGMENTATION_FAULT:
                 // Ocurrio un segfault
+                log_debug(logger, "Ocurrio un SEGMENTATION_FAULT");
+                log_pcb(logger, pcb);
                 send_segmentation_fault(pcb->socket_consola);
             default:
                 break;
