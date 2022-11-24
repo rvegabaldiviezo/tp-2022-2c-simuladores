@@ -32,7 +32,8 @@
     "handle_cpu.h": "c",
     "handle_kernel.h": "c",
     "stdbool.h": "c",
-    "cmath": "c"
+    "cmath": "c",
+    "math.h": "c"
   },
   "C_Cpp.errorSquiggles": "Disabled"
 }

@@ -40,7 +40,7 @@ main-build: memoria
 memoria: $(OBJS) $(USER_OBJS) makefile $(OPTIONAL_TOOL_DEPS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C Linker'
-	gcc  -o "memoria" $(OBJS) $(USER_OBJS) $(LIBS) -lshared -lcommons
+	gcc  -o "memoria" $(OBJS) $(USER_OBJS) $(LIBS) -lm -lshared -lcommons
 	@echo 'Finished building target: $@'
 	@echo ' '
 

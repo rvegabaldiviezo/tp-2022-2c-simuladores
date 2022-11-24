@@ -328,12 +328,10 @@ void wait_cpu_dispatch()
                 // avisamos a la consola de que se finalizo el proceso
                 send_exit(pcb->socket_consola);
                 log_info(logger, "PID: %i - Estado Anterior: EXECUTE - Estado Actual: EXIT", pcb->id);
-                execute_algorithm();
                 break;
             case INT_QUANTUM:
                 // metemos el pcb en la cola de ready
                 ready_state_from_quantum(pcb);
-                execute_algorithm();
                 break;
             case INT_IO:
                 // obtenemos el dispositivo y registro o unidad de trabajo que tambien envio la cpu
@@ -343,8 +341,6 @@ void wait_cpu_dispatch()
                 log_info(logger, "PID: %i - Bloqueado por: %s", pcb->id, device);
                 // resolver la solicitud de i/o uno de los hilos
                 block_state(pcb, device, arg);
-                // acordarse de implentar un sem_post(&can_execute); al desbloquearse
-                execute_algorithm();
                 break;
             case INT_PAGE_FAULT:
                 // Resolvemos el pagefault de la siguiente manera
@@ -364,15 +360,17 @@ void wait_cpu_dispatch()
                 log_info(logger, "Page Fault PID: %i - Segmento: %i - Pagina: %i", pcb->id, argument->segment, argument->page);
                 pthread_t tid; // no voy a usar el thread id asi que lo creo y muere
                 pthread_create(&tid, NULL, handle_page_fault, argument);
-                
+
                 break;
             case SEGMENTATION_FAULT:
                 // Ocurrio un segfault
                 log_debug(logger, "Ocurrio un SEGMENTATION_FAULT");
                 send_segmentation_fault(pcb->socket_consola);
+
             default:
                 break;
         }
+        execute_algorithm();
     }
 }
 

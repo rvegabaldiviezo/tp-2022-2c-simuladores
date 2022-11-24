@@ -51,7 +51,7 @@ void process_started()
         t_list* page_table = list_create();
 
         // Calculamos cuantas paginas necesitamos para el segmento
-        int page_ammount = ceil(segment_size / memoria_config->page_size);
+        int page_ammount = ceil((float)segment_size / (float)memoria_config->page_size);
         log_trace(logger, "Inicializo cant paginas: %i, para PID: %i", page_ammount, pid);
 
         // Creamos cada una de las paginas
@@ -78,6 +78,8 @@ void process_started()
 
         // Guardamos este segmento en la tabla de segmentos
         list_add(segment_table, segment);
+
+        log_info(logger, "Creacion de Tabla de Paginas PID: %i - Segmento: %i - TAMAÑO: %i paginas", pid, i, page_ammount);
     }
     dictionary_put(page_tables_per_pid, string_itoa(pid), page_tables);
 
@@ -107,12 +109,21 @@ void process_finished()
 
             log_trace(logger, "Libero Page: %i, PID: %i", j, pid);
         }
+
+        log_info(logger, "Destruccion de Tabla de Paginas PID: %i - Segmento: %i - TAMAÑO: %i paginas", pid, i, list_size(page_table));
     }
 
     send_process_finished_response(socket_kernel);
+    log_debug(logger, "Se liberaron las paginas de PID: %i", pid);
 }
 
 void resolve_page_fault()
 {
+    int pid = recv_int(socket_kernel);
+    int segment = recv_int(socket_kernel);
+    int page = recv_int(socket_kernel);
+
+    log_debug(logger, "Comienzo de resolucion de Page Fault para PID: %i, Segment: %i, Page: %i", pid, segment, page);
     send_page_fault_resolved(socket_kernel);
+    log_debug(logger, "Page Fault resuelto PID: %i, Segment: %i, Page: %i", pid, segment, page);
 }
