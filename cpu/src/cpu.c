@@ -23,9 +23,7 @@ pthread_t thread_interrupt;
 
 int main(int argc, char **argv) {
 
-	char* cpu_config_path = argv[1]; // Obtengo path de config
-
-	setup(cpu_config_path);	// Paso el path de cfg por parametro
+	setup(argv);	// Paso el argv por parametro
 
 	connections();  // FUNCION INICIALIZAR DISPATCH E INTERRUPT
 
@@ -38,7 +36,7 @@ int main(int argc, char **argv) {
 
 
 
-void setup (char* path){
+void setup (char **argv){
 
 	// Logger
 
@@ -46,7 +44,9 @@ void setup (char* path){
 
 	// Creo config
 
-	cpu_config = config_create(path);
+	char* cpu_config_path = argv[1];
+
+	cpu_config = config_create(cpu_config_path);
 
 	// Error por si no se paso bien el argumento
 
@@ -126,36 +126,36 @@ void instruction_cycle(){
 			switch(instruction_fetched->instruction){
 				case SET:
 
-					set_execute(pcb, (t_register)param1->parameter, (uint32_t)param2->parameter);
 					log_info(logger, "PID: %i - Ejecutando: %s - %s - %i", pcb->id, t_instruction_type_string[instruction_fetched->instruction], t_register_string[(int)param1->parameter], (int)param2->parameter);
+					set_execute(pcb, (t_register)param1->parameter, (uint32_t)param2->parameter);
 					pcb->program_counter++;
 
 					break;
 				case ADD:
 
-					add_execute(pcb, (t_register)param1->parameter, (t_register)param2->parameter);
 					log_info(logger, "PID: %i - Ejecutando: %s - %s - %s", pcb->id, t_instruction_type_string[instruction_fetched->instruction], t_register_string[(int)param1->parameter], t_register_string[(int)param2->parameter]);
+					add_execute(pcb, (t_register)param1->parameter, (t_register)param2->parameter);
 					pcb->program_counter++;
 
 					break;
 				case MOV_IN:
 
-					mov_execute(pcb, (t_register)param1->parameter, (uint32_t)param2->parameter, 0);
 					log_info(logger, "PID: %i - Ejecutando: %s - %s - %i", pcb->id, t_instruction_type_string[instruction_fetched->instruction], t_register_string[(int)param1->parameter], (int)param2->parameter);
+					mov_execute(pcb, (t_register)param1->parameter, (uint32_t)param2->parameter, IN);
 
 					break;
 				case MOV_OUT:
 
-					mov_execute(pcb, (t_register)param2->parameter, (uint32_t)param1->parameter, 1);
 					log_info(logger, "PID: %i - Ejecutando: %s - %i - %s", pcb->id, t_instruction_type_string[instruction_fetched->instruction], (int)param1->parameter, t_register_string[(int)param2->parameter]);
+					mov_execute(pcb, (t_register)param2->parameter, (uint32_t)param1->parameter, OUT);
 
 					break;
 				case IO:
 
+					log_info(logger, "PID: %i - Ejecutando: %s - %s - %i", pcb->id, t_instruction_type_string[instruction_fetched->instruction], (char*)param1->parameter, (int)param2->parameter);
 					device = (char*)param1->parameter;
 					io_value = (int)param2->parameter;
 					interruption_io_pf = INT_IO;
-					log_info(logger, "PID: %i - Ejecutando: %s - %s - %i", pcb->id, t_instruction_type_string[instruction_fetched->instruction], (char*)param1->parameter, (int)param2->parameter);
 					pcb->program_counter++;
 
 					break;
@@ -268,15 +268,7 @@ void mov_execute(t_pcb* pcb, t_register reg1, uint32_t dl, int in_out){
 		//1 o 2 accesos
 		if(frame != -1){
 			log_info(logger, "PID: %i - TLB HIT - Segmento: %i - Pagina: %i", pcb->id, segment_num, page_num);
-			// Acceder a memoria por el dato
-			if(in_out == 0){
-				request_data_in(frame, page_offset, pcb, reg1);
-				log_info(logger, "PID: %i - Acción: LEER - Segmento: %i - Pagina: %i - Dirección Fisica: %i %i", pcb->id, segment_num, page_num, frame, page_offset);
-			}
-			else{
-				request_data_out(frame, page_offset, pcb, reg1);
-				log_info(logger, "PID: %i - Acción: ESCRIBIR - Segmento: %i - Pagina: %i - Dirección Fisica: %i %i", pcb->id, segment_num, page_num, frame, page_offset);
-			}
+			tlb_access(pcb, segment_num, page_num, frame, page_offset, reg1, in_out);
 		}
 		else{
 			log_info(logger, "PID: %i - TLB MISS - Segmento: %i - Pagina: %i", pcb->id, segment_num, page_num);
@@ -287,55 +279,19 @@ void mov_execute(t_pcb* pcb, t_register reg1, uint32_t dl, int in_out){
 				frame = recv_int(socket_memoria);
 				// agrego a lista o reemplazo?
 				if(list_size(tlb) < inputs_tlb){
-					t_tlb* new_tlb = malloc(sizeof(new_tlb));
-					// creo tlb nueva
-					new_tlb->pid = pcb->id;
-					new_tlb->segment = segment_num;
-					new_tlb->page = page_num;
-					new_tlb->frame = frame;
-					new_tlb->time = timestamp;
-					timestamp++;
-					list_add(tlb, new_tlb);
+					add_to_tlb(pcb->id, segment_num, page_num, frame);
 				}
 				else{
-					// Itero y guardo indice de timestamp mas bajo
-					t_tlb* aux_tlb = list_get(tlb,0);
-					int replace_value = aux_tlb->time + 1; // creo valor ficticio
-					int index_replace;					// indice de la victima
-					for(int i = 0; i < list_size(tlb); i++){
-						t_tlb* replaced_tlb = list_get(tlb,i);
-						if(replaced_tlb->time < replace_value){
-							replace_value = replaced_tlb->time;
-							index_replace = i;
-						}	// Se recorre la lista guardando siempre el menor time
-					}		// al final, el index_replace marca el de menor time
-					aux_tlb = list_get(tlb, index_replace);// reemplazo segun el index anterior
-					aux_tlb->pid = pcb->id;
-					aux_tlb->segment = segment_num;
-					aux_tlb->page = page_num;
-					aux_tlb->frame = frame;
-					aux_tlb->time = timestamp;
-					timestamp++;
+					replace_tlb_input(pcb->id, segment_num, page_num, frame);
 				}
 				for(int i = 0; i < list_size(tlb); i++){
 					t_tlb* aux_tlb = list_get(tlb,i);
 					log_info(logger, "%i|PID:%i|SEGMENTO:%i|PAGINA:%i|MARCO:%i", i, aux_tlb->pid, aux_tlb->segment, aux_tlb->page, aux_tlb->frame);
 				}
-				// Acceder a memoria por el dato
-				if(in_out == 0){
-					request_data_in(frame, page_offset, pcb, reg1);
-					log_info(logger, "PID: %i - Acción: LEER - Segmento: %i - Pagina: %i - Dirección Fisica: %i %i", pcb->id, segment_num, page_num, frame, page_offset);
-				}
-				else{
-					request_data_out(frame, page_offset, pcb, reg1);
-					log_info(logger, "PID: %i - Acción: ESCRIBIR - Segmento: %i - Pagina: %i - Dirección Fisica: %i %i", pcb->id, segment_num, page_num, frame, page_offset);
-				}
+				tlb_access(pcb, segment_num, page_num, frame, page_offset, reg1, in_out);
 			}
 			else if (op_code == PAGE_FAULT){
-			 	interruption_io_pf = INT_PAGE_FAULT;
-			 	pf_segment = segment_num;
-			 	pf_page = page_num;
-			 	log_info(logger, "Page Fault PID: %i - Segmento: %i - Pagina: %i", pcb->id, segment_num, page_num);
+				pf_occurred(pcb->id, segment_num, page_num);
 			}
 		}
 	}
@@ -376,6 +332,57 @@ int check_tlb(int process_id, int segment_num, int page_num){     // Retorna mar
 
 
 
+void tlb_access(t_pcb* pcb, int segment_num, int page_num, int frame, int page_offset, uint32_t reg1, int in_out){
+	// Acceder a memoria por el dato
+	if(in_out == IN){
+		request_data_in(frame, page_offset, pcb, reg1);
+		log_info(logger, "PID: %i - Acción: LEER - Segmento: %i - Pagina: %i - Dirección Fisica: %i %i", pcb->id, segment_num, page_num, frame, page_offset);
+	}
+	else if(in_out == OUT){
+		request_data_out(frame, page_offset, pcb, reg1);
+		log_info(logger, "PID: %i - Acción: ESCRIBIR - Segmento: %i - Pagina: %i - Dirección Fisica: %i %i", pcb->id, segment_num, page_num, frame, page_offset);
+	}
+}
+
+
+
+void add_to_tlb(int pid, int segment_num, int page_num, int frame){
+	// creo tlb nueva
+	t_tlb* new_tlb = malloc(sizeof(new_tlb));
+	new_tlb->pid = pid;
+	new_tlb->segment = segment_num;
+	new_tlb->page = page_num;
+	new_tlb->frame = frame;
+	new_tlb->time = timestamp;
+	timestamp++;
+	list_add(tlb, new_tlb);
+}
+
+
+
+void replace_tlb_input(int pid, int segment_num, int page_num, int frame){
+	// Itero y guardo indice de timestamp mas bajo
+	t_tlb* aux_tlb = list_get(tlb,0);
+	int replace_value = aux_tlb->time + 1; // creo valor ficticio
+	int index_replace;					// indice de la victima
+	for(int i = 0; i < list_size(tlb); i++){
+		t_tlb* replaced_tlb = list_get(tlb,i);
+		if(replaced_tlb->time < replace_value){
+			replace_value = replaced_tlb->time;
+			index_replace = i;
+		}	// Se recorre la lista guardando siempre el menor time
+	}		// al final, el index_replace marca el de menor time
+	aux_tlb = list_get(tlb, index_replace);// reemplazo segun el index anterior
+	aux_tlb->pid = pid;
+	aux_tlb->segment = segment_num;
+	aux_tlb->page = page_num;
+	aux_tlb->frame = frame;
+	aux_tlb->time = timestamp;
+	timestamp++;
+}
+
+
+
 void request_data_in(int frame, int page_offset, t_pcb* pcb, t_register reg1){
 	send_read_request(socket_memoria, pcb->id, frame, page_offset);
 	recv_and_validate_op_code_is(socket_memoria, RAM_ACCESS_READ);
@@ -391,17 +398,19 @@ void request_data_out(int frame, int page_offset, t_pcb* pcb, t_register reg1){
 }
 
 
-/*
-   HANDSHAKE: Hara falta que la memoria envie los datos de config necesarios (cant pag/seg y tam pag)
-   SECCION TLB, la idea es tener un valor de mas en la estructura TLB, ese valor es un int
-   que sirve a la hora de hacer FIFO o LRU, y este se maneja distinto dependiendo si es uno u otro
-   FIFO: cada vez que se llena una entrada se asigna un numero 1+ que el anterior, si se repite un
-   presente no cambia nada. AL reemplazar busco el menor. Nada de timestamp
-   LRU: cada vez que se llena una entrada se asigna un numero 1+ que el anterior, pero se repite un
-   presente el valor de ref se cambia por uno nuevo. Al reemplazar busco el menor. Nada de timestamp
 
-   SECCION MMU, es una función. Sería invocada cada vez que se recibe mov_in o mov_out. Se toma el parametro
-   que contenga la dir logica
+void pf_occurred(int pid, int segment_num, int page_num){
+	interruption_io_pf = INT_PAGE_FAULT;
+	pf_segment = segment_num;
+	pf_page = page_num;
+	log_info(logger, "Page Fault PID: %i - Segmento: %i - Pagina: %i", pid, segment_num, page_num);
+}
+
+
+
+/*
+   FALTA AGREGAR UN HILO QUE ESCUCHE LA MEMORIA Y SE ENCARGUE DE LIMPIAR LA TLB CON LAS COSAS
+   QUE SE SWAPEEN PARA EVITAR INCONSISTENCIA, VA A HABER QUE SEMAFORIZAR LA TLB
 */
 
 
