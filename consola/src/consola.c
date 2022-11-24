@@ -102,6 +102,11 @@ int main(int argc, char **argv) {
 			send_pantalla_response(socket_kernel);
 			break;
 
+		case SEG_FAULT:
+			printf("Error: Segmentation Fault (SIGSEGV)\n");
+			goto exit_cycle;
+			break;
+
 		case PROCESS_FINISHED:
 		default:
 			log_trace(logger, "Fianlizo la ejecucion de consola...");

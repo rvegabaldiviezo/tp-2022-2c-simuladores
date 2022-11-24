@@ -246,6 +246,24 @@ void send_pcb_io(int socket, t_pcb* pcb, char* device, int arg)
     send_buffer(socket, buffer);
     destroy_buffer(buffer);
 }
+void send_pcb_pf(int socket, t_pcb* pcb, int segment, int page)
+{
+    t_buffer* buffer = create_buffer();
+
+    add_op_code(buffer, PCB);
+    add_to_buffer(buffer, &pcb->id, sizeof(pcb->id));
+    add_to_buffer(buffer, &pcb->interrupt_type, sizeof(pcb->interrupt_type));
+    add_to_buffer(buffer, &pcb->program_counter, sizeof(pcb->program_counter));
+    add_registers(buffer, pcb->registers);
+    add_to_buffer(buffer, &pcb->socket_consola, sizeof(pcb->socket_consola));
+    add_segment_table(buffer, pcb->segment_table);
+    add_instructions(buffer, pcb->instructions);
+    add_to_buffer(buffer, &segment, sizeof(segment));
+    add_to_buffer(buffer, &page, sizeof(page));
+
+    send_buffer(socket, buffer);
+    destroy_buffer(buffer);
+}
 // Kernel -> CPU o CPU -> Kernel
 void send_pcb(int socket, t_pcb* pcb)
 {
@@ -313,6 +331,13 @@ void send_exit(int socket)
 {
     t_buffer* buffer = create_buffer();
     add_op_code(buffer, PROCESS_FINISHED);
+    send_buffer(socket, buffer);
+    destroy_buffer(buffer);
+}
+void send_segmentation_fault(int socket)
+{
+    t_buffer* buffer = create_buffer();
+    add_op_code(buffer, SEG_FAULT);
     send_buffer(socket, buffer);
     destroy_buffer(buffer);
 }

@@ -41,6 +41,11 @@ typedef struct {
     char* device;
     int arg;
 } t_io;
+typedef struct {
+    t_pcb* pcb;
+    int segment;
+    int page;
+} t_pf;
 // Semaphores
 sem_t can_execute;
 // Threads
@@ -169,6 +174,14 @@ void ready_state_from_io(t_pcb* pcb)
     sem_post(&can_execute);
 }
 
+void ready_state_from_page_fault(t_pcb* pcb)
+{
+    queue_push(ready_1_queue, pcb);
+    log_info(logger, "PID: %i - Estado Anterior: BLOCKED - Estado Actual: READY", pcb->id);
+    log_ready();
+    sem_post(&can_execute);
+}
+
 void block_state(t_pcb* pcb, char* device, int arg)
 {
     t_io* io_data = malloc(sizeof(t_io));
@@ -184,6 +197,18 @@ void block_state(t_pcb* pcb, char* device, int arg)
     sem_post(io_sem);
 }
 
+// Hilo para manejar un page fault
+void* handle_page_fault(void* arg)
+{
+    t_pf* pf = (t_pf*)arg;
+
+    // Envio request a la memoria para que resuelva el page fault
+    send_page_fault_resolve(socket_memoria, pf->pcb->id, pf->segment, pf->page);
+    // Esperamos la respuesta de memoria que se haya resuelto
+    recv_and_validate_op_code_is(socket_memoria, PAGE_FAULT_RESOLVED);
+    // Enviamos el proceso a READY
+    ready_state_from_page_fault(pf->pcb);
+}
 
 void* handle_io(void* arg)
 {
@@ -313,8 +338,7 @@ void wait_cpu_dispatch()
             case INT_IO:
                 // obtenemos el dispositivo y registro o unidad de trabajo que tambien envio la cpu
                 char* device = recv_string(socket_cpu_dispatch);
-                int arg;
-                recv(socket_cpu_dispatch, &arg, sizeof(arg), 0);
+                int arg = recv_int(socket_cpu_dispatch);
                 log_info(logger, "PID: %i - Estado Anterior: EXECUTE - Estado Actual: BLOCKED", pcb->id);
                 log_info(logger, "PID: %i - Bloqueado por: %s", pcb->id, device);
                 // resolver la solicitud de i/o uno de los hilos
@@ -330,7 +354,21 @@ void wait_cpu_dispatch()
                     3.- Esperar la respuesta del módulo memoria.
                     4.- Al recibir la respuesta del módulo memoria, desbloquear el proceso y colocarlo en la cola de ready correspondiente.
                 */
+                t_pf* argument = (t_pf*)malloc(sizeof(t_pf));
+
+                argument->pcb = pcb;
+                argument->segment = recv_int(socket_cpu_dispatch);
+                argument->page = recv_int(socket_cpu_dispatch);
+
+                log_info(logger, "PID: %i - Estado Anterior: EXECUTE - Estado Actual: BLOCKED", pcb->id);
+                log_info(logger, "Page Fault PID: %i - Segmento: %i - Pagina: %i", pcb->id, argument->segment, argument->page);
+                pthread_t tid; // no voy a usar el thread id asi que lo creo y muere
+                pthread_create(&tid, NULL, handle_page_fault, argument);
+                
                 break;
+            case SEGMENTATION_FAULT:
+                // Ocurrio un segfault
+                send_segmentation_fault(pcb->socket_consola);
             default:
                 break;
         }

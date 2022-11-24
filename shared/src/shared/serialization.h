@@ -13,6 +13,7 @@ typedef enum {
     PANTALLA,
     PROCESS_STARTED,
     PROCESS_FINISHED,
+    SEG_FAULT,
     PAGE_FAULT,
     PAGE_FAULT_RESOLVED,
     PAGE_TABLE_ACCESS,
@@ -38,6 +39,7 @@ void send_segments(int socket, t_list* segments);
 t_list* recv_segments(int socket);
 
 void send_pcb_io(int socket, t_pcb* pcb, char* device, int arg);
+void send_pcb_pf(int socket, t_pcb* pcb, int segment, int page);
 void send_pcb(int socket, t_pcb* pcb);
 t_pcb* recv_pcb(int socket);
 
@@ -50,6 +52,7 @@ void recv_interrupt(int socket);
 void send_teclado(int socket);
 void send_pantalla(int socket, int value);
 void send_exit(int socket);
+void send_segmentation_fault(int socket);
 // Consola -> Kernel
 void send_teclado_response(int socket, int value);
 void send_pantalla_response(int socket);

@@ -114,5 +114,5 @@ void process_finished()
 
 void resolve_page_fault()
 {
-
+    send_page_fault_resolved(socket_kernel);
 }
