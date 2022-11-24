@@ -33,12 +33,14 @@ void* handle_cpu(void* arg)
 			uint32_t value = 20; // valor random generico
 			frame = recv_frame(socket_cpu);
 			offset = recv_offset(socket_cpu);
+			sleep(1);
 			send_memory_value(socket_cpu, value);
 			break;
 		case 1:
 			frame = recv_frame(socket_cpu);
 			offset = recv_offset(socket_cpu);
 			reg = recv_reg(socket_cpu);
+			sleep(1);
 			send_mov_out_ok(socket_cpu);
 			break;
 		case 2:
@@ -47,6 +49,7 @@ void* handle_cpu(void* arg)
 			pid = recv_request_pid(socket_cpu);
 			segment = recv_request_segment(socket_cpu);
 			page = recv_request_page(socket_cpu);
+			sleep(1);
 			send_mem_code(socket_cpu, code);
 			send_frame(socket_cpu, frame);
 			break;

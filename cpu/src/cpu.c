@@ -121,6 +121,7 @@ void instruction_cycle(){
 
 			}
 
+			//log_pcb(logger, pcb);
 			switch(instruction_fetched->instruction){
 				case SET:
 
@@ -138,13 +139,13 @@ void instruction_cycle(){
 					break;
 				case MOV_IN:
 
-					mov_in_execute(pcb, (t_register)param1->parameter, (uint32_t)param2->parameter);
+					mov_execute(pcb, (t_register)param1->parameter, (uint32_t)param2->parameter, 0);
 					log_info(logger, "PID: %i - Ejecutando: %s - %s - %i", pcb->id, t_instruction_type_string[instruction_fetched->instruction], t_register_string[(int)param1->parameter], (int)param2->parameter);
 
 					break;
 				case MOV_OUT:
 
-					mov_out_execute(pcb, (uint32_t)param2->parameter, (t_register)param1->parameter);
+					mov_execute(pcb, (t_register)param2->parameter, (uint32_t)param1->parameter, 1);
 					log_info(logger, "PID: %i - Ejecutando: %s - %i - %s", pcb->id, t_instruction_type_string[instruction_fetched->instruction], (int)param1->parameter, t_register_string[(int)param2->parameter]);
 
 					break;
@@ -161,7 +162,13 @@ void instruction_cycle(){
 					// Guardar directo en pcb para hacer check al final
 					log_info(logger, "PID: %i - Ejecutando: %s", pcb->id, t_instruction_type_string[instruction_fetched->instruction]);
 					pcb->interrupt_type = EXECUTION_FINISHED;
-
+					for(int i = list_size(tlb) - 1; i >= 0; i--){
+						t_tlb* delete_tlb = list_get(tlb,i);
+						if(delete_tlb->pid == pcb->id){
+							delete_tlb = list_remove(tlb,i);
+							free(delete_tlb);
+						}
+					}
 					break;
 			}
 
@@ -188,7 +195,9 @@ void instruction_cycle(){
 				send_pcb(socket_kernel_dispatch, pcb);
 				break;
 		}
+
 		log_pcb(logger, pcb);
+		log_tlb(logger, tlb);
 		log_trace(logger, "PCB ENVIADO - A la espera de otro proceso");
 	}
 }
@@ -239,11 +248,11 @@ void add_execute(t_pcb* pcb, t_register reg1, t_register reg2){
 
 
 
-void mov_in_execute(t_pcb* pcb, t_register reg1, uint32_t param1){
+void mov_execute(t_pcb* pcb, t_register reg1, uint32_t dl, int in_out){
 	// MMU
 	int segment_max_size = memory_size * page_size;
-	int segment_num = floor(param1 / segment_max_size);
-	int segment_offset = param1 % segment_max_size;
+	int segment_num = floor(dl / segment_max_size);
+	int segment_offset = dl % segment_max_size;
 	int page_num = floor(segment_offset / page_size);
 	int page_offset = segment_offset % page_size;
 	log_trace(logger,"Segment max size: %i", segment_max_size);
@@ -261,76 +270,12 @@ void mov_in_execute(t_pcb* pcb, t_register reg1, uint32_t param1){
 		//1 o 2 accesos
 		if(frame != -1){
 			// Acceder a memoria por el dato
-			request_data_in(frame, page_offset, pcb, reg1);
-		}
-		else{
-			// no esta el frame, hay que pedirlo
-			send_frame_request(socket_memoria, pcb->id, segment_num, page_num);
-			int code = recv_mem_code(socket_memoria);
-			if(code == 0){
-				frame = recv_frame(socket_memoria);
-				// creo tlb nueva
-				t_tlb* new_tlb;
-				new_tlb->pid = pcb->id;
-				new_tlb->segment = segment_num;
-				new_tlb->page = page_num;
-				new_tlb->frame = frame;
-				new_tlb->time = timestamp;
-				timestamp++;
-				// agrego a lista o reemplazo?
-				if(list_size(tlb) < inputs_tlb){
-					list_add(tlb, new_tlb);
-				}
-				else{
-					// Itero y guardo indice de timestamp mas bajo
-					t_tlb* aux_tlb = list_get(tlb,0);
-					int replace_value = aux_tlb->time + 1; // creo valor ficticio
-					int index_replace;					// indice de la victima
-					for(int i = 0; i < list_size(tlb); i++){
-						t_tlb* replaced_tlb = list_get(tlb,i);
-						if(replaced_tlb->time < replace_value){
-							replace_value = replaced_tlb->time;
-							index_replace = i;
-						}	// Se recorre la lista guardando siempre el menor time
-					}		// al final, el index_replace marca el de menor time
-					list_replace(tlb, index_replace, new_tlb); // reemplazo segun el index anterior
-				}
-				// Acceder a memoria por el dato
+			if(in_out == 0){
 				request_data_in(frame, page_offset, pcb, reg1);
 			}
 			else{
-			 	interruption_io_pf = INT_PAGE_FAULT;
+				request_data_out(frame, page_offset, pcb, reg1);
 			}
-		}
-	}
-	log_tlb(logger, tlb);
-}
-
-
-
-void mov_out_execute(t_pcb* pcb, uint32_t param1, t_register reg1){
-	// MMU
-	int segment_max_size = memory_size * page_size;
-	int segment_num = floor(param1 / segment_max_size);
-	int segment_offset = param1 % segment_max_size;
-	int page_num = floor(segment_offset / page_size);
-	int page_offset = segment_offset % page_size;
-	log_trace(logger,"Segment max size: %i", segment_max_size);
-	log_trace(logger,"Segment num: %i", segment_num);
-	log_trace(logger,"Segment offset: %i", segment_offset);
-	log_trace(logger,"Page num: %i", page_num);
-	log_trace(logger,"Page offset: %i", page_offset);
-	// Segmentation fault?
-	if(segment_offset > segment_max_size){
-		interruption_io_pf = SEGMENTATION_FAULT;
-	}
-	else{
-		//Check TLB
-		int frame = check_tlb(pcb->id, segment_num, page_num);
-		//1 o 2 accesos
-		if(frame != -1){
-			// Acceder a memoria por el dato
-			request_data_out(frame, page_offset, pcb, reg1);
 		}
 		else{
 			// no esta el frame, hay que pedirlo
@@ -338,16 +283,16 @@ void mov_out_execute(t_pcb* pcb, uint32_t param1, t_register reg1){
 			int code = recv_mem_code(socket_memoria);
 			if(code == 0){
 				frame = recv_frame(socket_memoria);
-				// creo tlb nueva
-				t_tlb* new_tlb;
-				new_tlb->pid = pcb->id;
-				new_tlb->segment = segment_num;
-				new_tlb->page = page_num;
-				new_tlb->frame = frame;
-				new_tlb->time = timestamp;
-				timestamp++;
 				// agrego a lista o reemplazo?
 				if(list_size(tlb) < inputs_tlb){
+					t_tlb* new_tlb = malloc(sizeof(new_tlb));
+					// creo tlb nueva
+					new_tlb->pid = pcb->id;
+					new_tlb->segment = segment_num;
+					new_tlb->page = page_num;
+					new_tlb->frame = frame;
+					new_tlb->time = timestamp;
+					timestamp++;
 					list_add(tlb, new_tlb);
 				}
 				else{
@@ -362,10 +307,21 @@ void mov_out_execute(t_pcb* pcb, uint32_t param1, t_register reg1){
 							index_replace = i;
 						}	// Se recorre la lista guardando siempre el menor time
 					}		// al final, el index_replace marca el de menor time
-					list_replace(tlb, index_replace, new_tlb); // reemplazo segun el index anterior
+					aux_tlb = list_get(tlb, index_replace);// reemplazo segun el index anterior
+					aux_tlb->pid = pcb->id;
+					aux_tlb->segment = segment_num;
+					aux_tlb->page = page_num;
+					aux_tlb->frame = frame;
+					aux_tlb->time = timestamp;
+					timestamp++;
 				}
 				// Acceder a memoria por el dato
-				request_data_out(frame, page_offset, pcb, reg1);
+				if(in_out == 0){
+					request_data_in(frame, page_offset, pcb, reg1);
+				}
+				else{
+					request_data_out(frame, page_offset, pcb, reg1);
+				}
 			}
 			else{
 			 	interruption_io_pf = INT_PAGE_FAULT;
@@ -374,7 +330,6 @@ void mov_out_execute(t_pcb* pcb, uint32_t param1, t_register reg1){
 	}
 	log_tlb(logger, tlb);
 }
-
 
 
 
@@ -385,7 +340,7 @@ int check_tlb(int process_id, int segment_num, int page_num){     // Retorna mar
 		input_tlb = list_get(tlb,i);
 		if(process_id == input_tlb->pid && segment_num == input_tlb->segment && page_num == input_tlb->page){
 			frame = input_tlb->frame;
-			if(strcmp(replace_tlb, "LRU")){
+			if(strcmp(replace_tlb, "LRU") == 0){
 				input_tlb->time = timestamp;
 				timestamp++;
 			}

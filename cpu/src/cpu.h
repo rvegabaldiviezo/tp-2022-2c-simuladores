@@ -13,7 +13,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <math.h>
-
+#include <string.h>
 
 void* start_interrupt(void* arg);
 
@@ -29,9 +29,7 @@ void set_execute(t_pcb* pcb, t_register reg1, uint32_t param1);
 
 void add_execute(t_pcb* pcb, t_register reg1, t_register reg2);
 
-void mov_in_execute(t_pcb* pcb, t_register reg1, uint32_t param1);
-
-void mov_out_execute(t_pcb* pcb, uint32_t param1, t_register reg1);
+void mov_execute(t_pcb* pcb, t_register reg1, uint32_t param1, int in_out);
 
 int check_tlb(int process_id, int segment_num, int page_num);
 

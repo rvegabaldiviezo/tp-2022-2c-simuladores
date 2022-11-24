@@ -593,13 +593,13 @@ void send_frame_offset(int socket, int frame, int page_offset){
 	destroy_buffer(buffer);
 }
 
-void send_frame_offset_reg(int socket, int frame, int page_offset, uint32_t reg1){
+void send_frame_offset_reg(int socket, int frame, int page_offset, uint32_t reg){
 	t_buffer* buffer = create_buffer();
 	int code = 1;
 	add_to_buffer(buffer, &code, sizeof(code));
 	add_to_buffer(buffer, &frame, sizeof(frame));
 	add_to_buffer(buffer, &page_offset, sizeof(page_offset));
-	add_to_buffer(buffer, &reg1, sizeof(reg1));
+	add_to_buffer(buffer, &reg, sizeof(reg));
 	send_buffer(socket, buffer);
 	destroy_buffer(buffer);
 }
