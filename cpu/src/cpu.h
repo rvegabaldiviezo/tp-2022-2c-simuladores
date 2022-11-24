@@ -33,6 +33,9 @@ void mov_execute(t_pcb* pcb, t_register reg1, uint32_t param1, int in_out);
 
 int check_tlb(int process_id, int segment_num, int page_num);
 
+void mmu (int dl, int* segment_max_size, int* segment_num, int* segment_offset, int* page_num, int* page_offset);
+
 void request_data_in(int frame, int page_offset, t_pcb* pcb, t_register reg1);
 
 void request_data_out(int frame, int page_offset, t_pcb* pcb, t_register reg1);
+

@@ -250,16 +250,12 @@ void add_execute(t_pcb* pcb, t_register reg1, t_register reg2){
 
 void mov_execute(t_pcb* pcb, t_register reg1, uint32_t dl, int in_out){
 	// MMU
-	int segment_max_size = memory_size * page_size;
-	int segment_num = floor(dl / segment_max_size);
-	int segment_offset = dl % segment_max_size;
-	int page_num = floor(segment_offset / page_size);
-	int page_offset = segment_offset % page_size;
-	log_trace(logger,"Segment max size: %i", segment_max_size);
-	log_trace(logger,"Segment num: %i", segment_num);
-	log_trace(logger,"Segment offset: %i", segment_offset);
-	log_trace(logger,"Page num: %i", page_num);
-	log_trace(logger,"Page offset: %i", page_offset);
+	int segment_max_size;
+	int segment_num;
+	int segment_offset;
+	int page_num;
+	int page_offset;
+	mmu(dl, &segment_max_size, &segment_num, &segment_offset, &page_num, &page_offset);
 	// Segmentation fault?
 	t_segment* segment_pcb = (t_segment*)list_get(pcb->segment_table,segment_num);
 	if(segment_offset >= segment_pcb->size){
@@ -323,7 +319,7 @@ void mov_execute(t_pcb* pcb, t_register reg1, uint32_t dl, int in_out){
 				}
 				for(int i = 0; i < list_size(tlb); i++){
 					t_tlb* aux_tlb = list_get(tlb,i);
-					log_info(logger, "%i|PID:%i|SEGMENTO:%i|PAGINA:%i|MARCO:%i", i, pcb->id, aux_tlb->segment, aux_tlb->page, aux_tlb->frame);
+					log_info(logger, "%i|PID:%i|SEGMENTO:%i|PAGINA:%i|MARCO:%i", i, aux_tlb->pid, aux_tlb->segment, aux_tlb->page, aux_tlb->frame);
 				}
 				// Acceder a memoria por el dato
 				if(in_out == 0){
@@ -344,6 +340,20 @@ void mov_execute(t_pcb* pcb, t_register reg1, uint32_t dl, int in_out){
 		}
 	}
 	log_tlb(logger, tlb);
+}
+
+
+void mmu (int dl, int* segment_max_size, int* segment_num, int* segment_offset, int* page_num, int* page_offset){
+	*segment_max_size = memory_size * page_size;
+	*segment_num = floor(dl / *segment_max_size);
+	*segment_offset = dl % *segment_max_size;
+	*page_num = floor(*segment_offset / page_size);
+	*page_offset = *segment_offset % page_size;
+	log_trace(logger,"Segment max size: %i", *segment_max_size);
+	log_trace(logger,"Segment num: %i", *segment_num);
+	log_trace(logger,"Segment offset: %i", *segment_offset);
+	log_trace(logger,"Page num: %i", *page_num);
+	log_trace(logger,"Page offset: %i", *page_offset);
 }
 
 

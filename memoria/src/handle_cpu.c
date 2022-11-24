@@ -18,6 +18,8 @@ void* handle_cpu(void* arg)
 	 */
 	log_trace(logger, "Envio a la CPU memory_size: %i y page_size: %i", memoria_config->memory_size, memoria_config->page_size);
 	send_memdata(socket_cpu, memoria_config->memory_size, memoria_config->page_size);  //handshake con cpu
+
+	int counter = 0;
 	while(true){
 
 		int code = recv_request_code(socket_cpu);
@@ -44,14 +46,21 @@ void* handle_cpu(void* arg)
 			send_mov_out_ok(socket_cpu);
 			break;
 		case 2:
-			int code = 1; // 0 - existe, 1 - pf
-			//int frame = 25; // valor random generico
+			counter++;
+			if ((counter % 3) != 0){
+				int code = 0; // 0 - existe, 1 - pf
+				int frame = 25; // valor random generico
+				send_mem_code(socket_cpu, code);
+				send_frame(socket_cpu, frame);
+			}
+			else{
+				int code = 1; // 0 - existe, 1 - pf
+				send_mem_code(socket_cpu, code);
+			}
 			pid = recv_request_pid(socket_cpu);
 			segment = recv_request_segment(socket_cpu);
 			page = recv_request_page(socket_cpu);
 			sleep(1);
-			send_mem_code(socket_cpu, code);
-			//send_frame(socket_cpu, frame);
 			break;
 		}
 	}
