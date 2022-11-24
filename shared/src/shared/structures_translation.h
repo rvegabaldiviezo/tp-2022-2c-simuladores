@@ -23,7 +23,8 @@ const char * const t_interrupt_type_string[] = {
     [INT_IO] = "INT_IO",
     [INT_PAGE_FAULT] = "INT_PAGE_FAULT",
     [EXECUTION_FINISHED] = "EXECUTION_FINISHED",
-    [NO_INTERRUPT] = "NO_INTERRUPT"
+    [NO_INTERRUPT] = "NO_INTERRUPT",
+    [SEGMENTATION_FAULT] = "SEGMENTATION_FAULT"
 };
 
 #endif

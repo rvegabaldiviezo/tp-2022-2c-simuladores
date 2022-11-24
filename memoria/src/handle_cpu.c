@@ -44,14 +44,14 @@ void* handle_cpu(void* arg)
 			send_mov_out_ok(socket_cpu);
 			break;
 		case 2:
-			int code = 0; // 0 - existe, 1 - pf
-			int frame = 25; // valor random generico
+			int code = 1; // 0 - existe, 1 - pf
+			//int frame = 25; // valor random generico
 			pid = recv_request_pid(socket_cpu);
 			segment = recv_request_segment(socket_cpu);
 			page = recv_request_page(socket_cpu);
 			sleep(1);
 			send_mem_code(socket_cpu, code);
-			send_frame(socket_cpu, frame);
+			//send_frame(socket_cpu, frame);
 			break;
 		}
 	}

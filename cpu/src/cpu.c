@@ -12,7 +12,8 @@ int instruction_delay,
 	memory_size,
 	page_size,
 	inputs_tlb,
-	sigsegv;
+	pf_segment,
+	pf_page;
 long timestamp;
 char* replace_tlb;
 pthread_t thread_interrupt;
@@ -189,13 +190,12 @@ void instruction_cycle(){
 				send_pcb_io(socket_kernel_dispatch, pcb, device, io_value);
 				break;
 			case INT_PAGE_FAULT:
-				send_pcb(socket_kernel_dispatch, pcb);
+				send_pcb_pf(socket_kernel_dispatch, pcb, pf_segment, pf_page);
 				break;
 			default:
 				send_pcb(socket_kernel_dispatch, pcb);
 				break;
 		}
-
 		log_pcb(logger, pcb);
 		log_tlb(logger, tlb);
 		log_trace(logger, "PCB ENVIADO - A la espera de otro proceso");
@@ -261,23 +261,29 @@ void mov_execute(t_pcb* pcb, t_register reg1, uint32_t dl, int in_out){
 	log_trace(logger,"Page num: %i", page_num);
 	log_trace(logger,"Page offset: %i", page_offset);
 	// Segmentation fault?
-	if(segment_offset > segment_max_size){
+	t_segment* segment_pcb = (t_segment*)list_get(pcb->segment_table,segment_num);
+	if(segment_offset >= segment_pcb->size){
 		interruption_io_pf = SEGMENTATION_FAULT;
+		log_trace(logger,"SEGMENTATION FAULT");
 	}
 	else{
 		//Check TLB
 		int frame = check_tlb(pcb->id, segment_num, page_num);
 		//1 o 2 accesos
 		if(frame != -1){
+			log_info(logger, "PID: %i - TLB HIT - Segmento: %i - Pagina: %i", pcb->id, segment_num, page_num);
 			// Acceder a memoria por el dato
 			if(in_out == 0){
 				request_data_in(frame, page_offset, pcb, reg1);
+				log_info(logger, "PID: %i - Acción: LEER - Segmento: %i - Pagina: %i - Dirección Fisica: %i %i", pcb->id, segment_num, page_num, frame, page_offset);
 			}
 			else{
 				request_data_out(frame, page_offset, pcb, reg1);
+				log_info(logger, "PID: %i - Acción: ESCRIBIR - Segmento: %i - Pagina: %i - Dirección Fisica: %i %i", pcb->id, segment_num, page_num, frame, page_offset);
 			}
 		}
 		else{
+			log_info(logger, "PID: %i - TLB MISS - Segmento: %i - Pagina: %i", pcb->id, segment_num, page_num);
 			// no esta el frame, hay que pedirlo
 			send_frame_request(socket_memoria, pcb->id, segment_num, page_num);
 			int code = recv_mem_code(socket_memoria);
@@ -315,16 +321,25 @@ void mov_execute(t_pcb* pcb, t_register reg1, uint32_t dl, int in_out){
 					aux_tlb->time = timestamp;
 					timestamp++;
 				}
+				for(int i = 0; i < list_size(tlb); i++){
+					t_tlb* aux_tlb = list_get(tlb,i);
+					log_info(logger, "%i|PID:%i|SEGMENTO:%i|PAGINA:%i|MARCO:%i", i, pcb->id, aux_tlb->segment, aux_tlb->page, aux_tlb->frame);
+				}
 				// Acceder a memoria por el dato
 				if(in_out == 0){
 					request_data_in(frame, page_offset, pcb, reg1);
+					log_info(logger, "PID: %i - Acción: LEER - Segmento: %i - Pagina: %i - Dirección Fisica: %i %i", pcb->id, segment_num, page_num, frame, page_offset);
 				}
 				else{
 					request_data_out(frame, page_offset, pcb, reg1);
+					log_info(logger, "PID: %i - Acción: ESCRIBIR - Segmento: %i - Pagina: %i - Dirección Fisica: %i %i", pcb->id, segment_num, page_num, frame, page_offset);
 				}
 			}
 			else{
 			 	interruption_io_pf = INT_PAGE_FAULT;
+			 	pf_segment = segment_num;
+			 	pf_page = page_num;
+			 	log_info(logger, "Page Fault PID: %i - Segmento: %i - Pagina: %i", pcb->id, segment_num, page_num);
 			}
 		}
 	}
