@@ -1,4 +1,6 @@
 #include <math.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <commons/log.h>
 #include <commons/string.h>
 #include <commons/bitarray.h>
@@ -7,6 +9,7 @@
 #include <shared/structures.h>
 #include <shared/serialization.h>
 #include "memoria.h"
+#include "handle_kernel.h"
 
 extern t_log* logger;
 extern int socket_kernel;
@@ -14,8 +17,10 @@ extern t_memoria_config* memoria_config;
 // Structures
 extern void* ram;
 extern FILE* swap;
-extern t_dictionary* page_tables_per_pid;
+extern t_list* page_tables;
 extern t_bitarray* frames_usage;
+
+t_page_table_data* victim;
 
 void handle_kernel()
 {
@@ -40,10 +45,9 @@ void handle_kernel()
 
 void process_started()
 {
-    int pid = recv_int(socket_kernel);
+	int pid = recv_int(socket_kernel);
     t_list* segments_sizes = recv_process_started(socket_kernel);
     t_list* segment_table = list_create();
-    t_list* page_tables = list_create();
 
     // Iteramos por cada segmento
     for(int i = 0; i < list_size(segments_sizes); i++)
@@ -71,11 +75,11 @@ void process_started()
         }
 
         // Guardamos la tabla de pagina en nuestra lista de tablas de paginas
-        list_add(page_tables, page_table);
+        int page_table_index = list_add(page_tables, page_table);
 
         // Ya tenemos la tabla de paginas inicializada
         t_segment* segment = (t_segment*)malloc(sizeof(t_segment));
-        segment->page_table_index = pid;
+        segment->page_table_index = page_table_index;
         segment->size = segment_size;
 
         // Guardamos este segmento en la tabla de segmentos
@@ -83,25 +87,27 @@ void process_started()
 
         log_info(logger, "Creacion de Tabla de Paginas PID: %i - Segmento: %i - TAMAÑO: %i paginas", pid, i, page_ammount);
     }
-    dictionary_put(page_tables_per_pid, string_itoa(pid), page_tables);
 
     send_segment_table(socket_kernel, segment_table);
 }
 //void send_process_finished(int socket, int pid, t_list* segments);
 void process_finished()
 {
-    int pid = recv_int(socket_kernel);
-    t_list* segment_table = recv_segment_table(socket_kernel);
+	t_pcb* pcb = recv_pcb(socket_kernel);
+    t_list* segment_table = pcb->segment_table;
 
-    t_list* page_tables = (t_list*)dictionary_get(page_tables_per_pid, string_itoa(pid));
-
-    for(int i = 0; i < list_size(page_tables); i++)
+    for(int i = 0; i < list_size(segment_table); i++)
     {
-        t_list* page_table = (t_list*)list_get(page_tables, i);
+        t_segment* segment = (t_segment*)list_get(segment_table, i);
+        t_list* page_table = list_get(page_tables, segment->page_table_index);
 
         for(int j = 0; j < list_size(page_table); j++)
         {
             t_page_table_data* page = (t_page_table_data*)list_get(page_table, j);
+
+            if(page->P == 1) {
+                bitarray_clean_bit(frames_usage, page->frame);
+            }
 
             page->frame = -1;
             page->P = 0;
@@ -109,43 +115,68 @@ void process_finished()
             page->M = 0;
             page->swap_pos = -1;
 
-            log_trace(logger, "Libero Page: %i, PID: %i", j, pid);
+            log_trace(logger, "Libero PID: %i, Segmento: %i Pagina: %i", i, j, pcb->id);
         }
 
-        log_info(logger, "Destruccion de Tabla de Paginas PID: %i - Segmento: %i - TAMAÑO: %i paginas", pid, i, list_size(page_table));
+        log_info(logger, "Destruccion de Tabla de Paginas PID: %i - Segmento: %i - TAMAÑO: %i paginas", pcb->id, i, list_size(page_table));
     }
 
     send_process_finished_response(socket_kernel);
-    log_debug(logger, "Se liberaron las paginas de PID: %i", pid);
+    log_debug(logger, "Se liberaron las paginas de PID: %i", pcb->id);
 }
 
 void resolve_page_fault()
 {
-    int pid = recv_int(socket_kernel);
+	t_pcb* pcb = recv_pcb(socket_kernel);
     int segment = recv_int(socket_kernel);
     int page = recv_int(socket_kernel);
 
-    log_debug(logger, "Comienzo de resolucion de Page Fault para PID: %i, Segment: %i, Page: %i", pid, segment, page);
+    log_debug(logger, "Comienzo de resolucion de Page Fault para PID: %i, Segment: %i, Page: %i", pcb->id, segment, page);
 
-	t_page_table_data* page_data = access_page(pid, segment, page);
+	t_segment* segment_data = list_get(pcb->segment_table, segment);
+    t_list* page_table = list_get(page_tables, segment_data->page_table_index);
+    t_page_table_data* page_data = list_get(page_table, page);
 
     if(page_data->swap_pos == -1)
     {
         // No esta ni en disco
         int frame = find_free_frame();
-    
-        if(frame == -1)
-        {
-            // La memoria esta llena
-            frame = swap_replace();
-        }
 
         page_data->frame = frame;
         page_data->P = 1;
     }
+    else
+    {
+        // Esta en disco
+        // Traemos los datos de disco
+        void* swap_data = read_page_from_swap(page_data);
+
+        int frame = find_free_frame();
+
+        void* dest = ram + memoria_config->page_size * frame;
+        memcpy(dest, swap_data, memoria_config->page_size * sizeof(int));
+    }
 
     send_page_fault_resolved(socket_kernel);
-    log_debug(logger, "Page Fault resuelto PID: %i, Segment: %i, Page: %i", pid, segment, page);
+    log_debug(logger, "Page Fault resuelto PID: %i, Segment: %i, Page: %i", pcb->id, segment, page);
+}
+
+void* read_page_from_swap(t_page_table_data* page)
+{
+    swap = fopen(memoria_config->path_swap, "r");
+    fseek(swap, page->swap_pos, SEEK_SET);
+    void* page_swap = malloc(sizeof(int) * memoria_config->page_size);
+    fread(&page_swap, sizeof(int), memoria_config->page_size, swap);
+    return page_swap;
+}
+
+void write_page_to_swap(t_page_table_data* page)
+{
+    swap = fopen(memoria_config->path_swap, "a");
+    void* ram_page_start = ram + page->frame * memoria_config->page_size;
+    fwrite(ram_page_start, sizeof(int), memoria_config->page_size, swap);
+    fclose(swap);
+    page->swap_pos = ftell(swap);
 }
 
 int find_free_frame()
@@ -159,10 +190,102 @@ int find_free_frame()
             break;
         }
     }
+
+    if(frame == -1)
+    {
+        // La memoria esta llena
+        t_page_table_data* victim = find_victim();
+        
+        if(victim->M == 1)
+        {
+            // Escribir en disco
+            write_page_to_swap(victim);
+        }
+        victim->P = 0;
+        frame = victim->frame;
+    }
+
     return frame;
 }
 
-int swap_replace()
+// Devuelve una pagina victima para reemplazar
+t_page_table_data* find_victim()
 {
-    
+    for(int o = 0; true; o++)
+    {
+        log_trace(logger, "Buscando victima...");
+
+        // TODO Aca rompe
+
+        for(int i = 0; i < list_size(page_tables); i++)
+        {
+            t_list* page_table = list_get(page_tables, i);
+            for(int j = 0; j < list_size(page_tables); j++)
+            {
+                t_page_table_data* page = list_get(page_tables, j);
+
+                if(is_victim(page, o))
+                {
+                    log_debug(logger, "Se encontro victima!");
+                    return page;
+                }
+            }
+        }
+    }
 }
+
+bool is_victim(t_page_table_data* page, int iteration)
+{
+    if(strcmp(memoria_config->replace_algorithm, "CLOCK-M") == 0)
+    {
+        if(page->P == 0)
+            return false;
+
+        if(iteration % 2 == 0)
+        {
+            if(page->U == 0 && page->M == 0)
+            {
+                return true;
+            }
+        }
+        else
+        {
+            if(page->U == 0 && page->M == 1)
+            {
+                return true;
+            }
+            else
+            {
+                page->U = 0;
+            }
+        }
+    }
+    else
+    {
+        if(page->P == 0)
+            return false;
+
+        if(page->U == 0)
+        {
+            return true;
+        }
+        else
+        {
+            page->U = 0;
+        }
+    }
+    return false;
+}
+
+
+// U = 1 y M = 0
+// U = 1 y M = 1
+
+// 1) busca U = 0 y M = 0
+// si no encuentra
+// 2) busca U = 0 y M = 1, aplicandole U = 0 
+// 3) volver a 1)
+
+// Aplica el algoritmo CLOCK o CLOCK MODIFICADO a una pagina. Devuelve:
+// true -> si ya encontro la victima
+// false -> si se tiene que seguir buscando

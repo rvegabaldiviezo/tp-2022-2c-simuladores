@@ -67,17 +67,17 @@ void send_read_response(int socket, int value);
 int recv_memory_size(int socket);
 int recv_page_size(int socket);
 
-void send_frame_request(int socket, int pid, int segment, int page);
-void send_write_request(int socket, int pid, int frame, int offset, int value);
-void send_read_request(int socket, int pid, int frame, int offset);
+void send_frame_request(int socket, t_pcb* pcb, int segment, int page);
+void send_write_request(int socket, t_pcb* pcb, int frame, int offset, int value);
+void send_read_request(int socket, t_pcb* pcb, int frame, int offset);
 
 // Kernel -> Memoria
 void send_process_started(int socket, int pid, t_list* segments);
 t_list* recv_process_started(int socket);
-void send_process_finished(int socket, int pid, t_list* segments_table);
+void send_process_finished(int socket, t_pcb* pcb);
 t_list* recv_process_finished(int socket);
 void send_process_finished_response(int socket);
-void send_page_fault_resolve(int socket, int pid, int segment, int page); // resolve -> aun no resuelto 
+void send_page_fault_resolve(int socket, t_pcb* pcb, int segment, int page); // resolve -> aun no resuelto 
 
 // Memoria -> Kernel
 void send_segment_table(int socket, t_list* segments);

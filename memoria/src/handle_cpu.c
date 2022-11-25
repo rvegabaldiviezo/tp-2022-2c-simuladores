@@ -12,7 +12,7 @@ extern t_memoria_config* memoria_config;
 // Structures
 extern void* ram;
 extern FILE* swap;
-extern t_dictionary* page_tables_per_pid;
+extern t_list* page_tables;
 
 void* handle_cpu(void* arg)
 {
@@ -50,7 +50,7 @@ void* handle_cpu(void* arg)
 
 void ram_access_read()
 {
-	int pid = recv_int(socket_cpu);
+	t_pcb* pcb = recv_pcb(socket_cpu);
 	int frame = recv_int(socket_cpu);
 	int offset = recv_int(socket_cpu);
 
@@ -59,7 +59,7 @@ void ram_access_read()
 }
 void ram_access_write()
 {
-	int pid = recv_int(socket_cpu);
+	t_pcb* pcb = recv_pcb(socket_cpu);
 	int frame = recv_int(socket_cpu);
 	int offset = recv_int(socket_cpu);
 	int value = recv_int(socket_cpu);
@@ -69,23 +69,25 @@ void ram_access_write()
 }
 void frame_access()
 {
-	int pid = recv_int(socket_cpu);
+	t_pcb* pcb = recv_pcb(socket_cpu);
 	int segment = recv_int(socket_cpu);
 	int page = recv_int(socket_cpu);
 
-	t_page_table_data* page_data = access_page(pid, segment, page);
+	t_segment* segment_data = list_get(pcb->segment_table, segment);
+	t_list* page_table = list_get(page_tables, segment_data->page_table_index);
+	t_page_table_data* page_data = list_get(page_table, page);
 
 	sleep(memoria_config->memory_delay);
 
 	if(page_data->P == 1)
 	{
 		int frame = page_data->frame;
-		log_info(logger, "PID: %i - Página: %i - Marco: %i", pid, page, frame);
+		log_info(logger, "PID: %i - Página: %i - Marco: %i", pcb->id, page, frame);
 		send_frame_response(socket_cpu, frame);
 	}
 	else
 	{
-		log_debug(logger, "Page Fault, PID: %i - Página: %i", pid, page);
+		log_debug(logger, "Page Fault, PID: %i - Página: %i", pcb->id, page);
 		send_page_fault(socket_cpu);
 	}
 }

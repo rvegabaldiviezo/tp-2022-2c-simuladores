@@ -203,7 +203,7 @@ void* handle_page_fault(void* arg)
     t_pf* pf = (t_pf*)arg;
 
     // Envio request a la memoria para que resuelva el page fault
-    send_page_fault_resolve(socket_memoria, pf->pcb->id, pf->segment, pf->page);
+    send_page_fault_resolve(socket_memoria, pf->pcb, pf->segment, pf->page);
     // Esperamos la respuesta de memoria que se haya resuelto
     recv_and_validate_op_code_is(socket_memoria, PAGE_FAULT_RESOLVED);
     // Enviamos el proceso a READY
@@ -323,7 +323,7 @@ void wait_cpu_dispatch()
             case EXECUTION_FINISHED:
                 // avisamos a la memoria a que libere los datos del proceso
                 log_trace(logger, "segment_table: %i", list_size(pcb->segment_table));
-                send_process_finished(socket_memoria, pcb->id, pcb->segment_table);
+                send_process_finished(socket_memoria, pcb);
                 recv_and_validate_op_code_is(socket_memoria, PROCESS_FINISHED);
                 // avisamos a la consola de que se finalizo el proceso
                 send_exit(pcb->socket_consola);

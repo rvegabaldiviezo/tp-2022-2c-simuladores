@@ -133,6 +133,18 @@ void add_registers(t_buffer* buffer, t_register* registers)
     add_to_buffer(buffer, &registers[DX], sizeof(uint32_t));
 }
 
+void add_pcb(t_buffer* buffer, t_pcb* pcb)
+{
+    add_op_code(buffer, PCB);
+    add_to_buffer(buffer, &pcb->id, sizeof(pcb->id));
+    add_to_buffer(buffer, &pcb->interrupt_type, sizeof(pcb->interrupt_type));
+    add_to_buffer(buffer, &pcb->program_counter, sizeof(pcb->program_counter));
+    add_registers(buffer, pcb->registers);
+    add_to_buffer(buffer, &pcb->socket_consola, sizeof(pcb->socket_consola));
+    add_segment_table(buffer, pcb->segment_table);
+    add_instructions(buffer, pcb->instructions);
+}
+
 void send_buffer(int socket, t_buffer* buffer)
 {
     send(socket, buffer->stream, buffer->size, 0);
@@ -414,19 +426,11 @@ t_list* recv_process_started(int socket)
     }
     return segments;
 }
-void send_process_finished(int socket, int pid, t_list* segments_table)
+void send_process_finished(int socket, t_pcb* pcb)
 {
     t_buffer* buffer = create_buffer();
     add_op_code(buffer, PROCESS_FINISHED);
-    add_to_buffer(buffer, &pid, sizeof(pid));
-    int segments_count = list_size(segments_table);
-    add_to_buffer(buffer, &segments_count, sizeof(segments_count));
-    for(int i = 0; i < segments_count; i++)
-    {
-        t_segment* segment = (t_segment*)list_get(segments_table, i);
-        add_to_buffer(buffer, &segment->size, sizeof(segment->size));
-        add_to_buffer(buffer, &segment->page_table_index, sizeof(segment->page_table_index));
-    }
+    add_pcb(buffer, pcb);
     send_buffer(socket, buffer);
     destroy_buffer(buffer);
 }
@@ -444,11 +448,11 @@ t_list* recv_process_finished(int socket)
     return segments;
 }
 // resolve -> aun no resuelto (resolvelo)
-void send_page_fault_resolve(int socket, int pid, int segment, int page)
+void send_page_fault_resolve(int socket, t_pcb* pcb, int segment, int page)
 {
     t_buffer* buffer = create_buffer();
     add_op_code(buffer, PAGE_FAULT);
-    add_to_buffer(buffer, &pid, sizeof(pid));
+    add_pcb(buffer, pcb);
     add_to_buffer(buffer, &segment, sizeof(segment));
     add_to_buffer(buffer, &page, sizeof(page));
     send_buffer(socket, buffer);
@@ -559,45 +563,22 @@ int recv_page_size(int socket)
 	return page_size;
 }
 
-int recv_mem_code(int socket){
-	int mem_code;
-	recv(socket, &mem_code, sizeof(mem_code), 0);
-	return mem_code;
-}
-
-int recv_frame(int socket){
-	int frame;
-	recv(socket, &frame, sizeof(frame), 0);
-	return frame;
-}
-
-void recv_mov_out_ok(int socket){
-	int dummy;
-	recv(socket, &dummy, sizeof(dummy), 0);
-}
-
-uint32_t recv_memory_value(int socket){
-	uint32_t value;
-	recv(socket, &value, sizeof(value), 0);
-	return value;
-}
-
-void send_frame_request(int socket, int pid, int segment, int page)
+void send_frame_request(int socket, t_pcb* pcb, int segment, int page)
 {
 	t_buffer* buffer = create_buffer();
 	add_op_code(buffer, FRAME_ACCESS);
-	add_to_buffer(buffer, &pid, sizeof(pid));
+    add_pcb(buffer, pcb);
 	add_to_buffer(buffer, &segment, sizeof(segment));
 	add_to_buffer(buffer, &page, sizeof(page));
 	send_buffer(socket, buffer);
 	destroy_buffer(buffer);
 }
 
-void send_write_request(int socket, int pid, int frame, int offset, int value)
+void send_write_request(int socket, t_pcb* pcb, int frame, int offset, int value)
 {
 	t_buffer* buffer = create_buffer();
 	add_op_code(buffer, RAM_ACCESS_WRITE);
-	add_to_buffer(buffer, &pid, sizeof(pid));
+    add_pcb(buffer, pcb);
 	add_to_buffer(buffer, &frame, sizeof(frame));
 	add_to_buffer(buffer, &offset, sizeof(offset));
 	add_to_buffer(buffer, &value, sizeof(value));
@@ -605,11 +586,11 @@ void send_write_request(int socket, int pid, int frame, int offset, int value)
 	destroy_buffer(buffer);
 }
 
-void send_read_request(int socket, int pid, int frame, int offset)
+void send_read_request(int socket, t_pcb* pcb, int frame, int offset)
 {
 	t_buffer* buffer = create_buffer();
 	add_op_code(buffer, RAM_ACCESS_READ);
-	add_to_buffer(buffer, &pid, sizeof(pid));
+    add_pcb(buffer, pcb);
 	add_to_buffer(buffer, &frame, sizeof(frame));
 	add_to_buffer(buffer, &offset, sizeof(offset));
 	send_buffer(socket, buffer);

@@ -45,7 +45,7 @@ pthread_t thread_cpu;
 // Estructuras de la memoria
 void* ram;
 FILE* swap;
-t_dictionary* page_tables_per_pid;
+t_list* page_tables;
 t_bitarray* frames_usage; // Frames usados 0 -> libre, 1 -> ocupado
 // Key: PID, Value: lista de Tablas de Pagina
 // Key: Segmento, Value: Tabla de Pagina
@@ -119,20 +119,12 @@ void initialize_config(char **argv)
 
 void initialize_memory_structures()
 {
-	ram = malloc(memoria_config->memory_size);
+	ram = malloc(sizeof(int) * memoria_config->memory_size);
 	swap = fopen(memoria_config->path_swap, "w+");
-	ftruncate(memoria_config->path_swap, memoria_config->swap_size);
-	page_tables_per_pid = dictionary_create();
+	fclose(swap);
+	ftruncate(memoria_config->path_swap, sizeof(int) * memoria_config->swap_size);
+	page_tables = list_create();
 
 	int frames_count = memoria_config->page_size / memoria_config->memory_size;
 	frames_usage = bitarray_create_with_mode(malloc(frames_count), frames_count, LSB_FIRST);
-}
-
-t_page_table_data* access_page(int pid, int segment, int page)
-{
-	t_list* page_tables_per_segment = (t_list*)dictionary_get(page_tables_per_pid, string_itoa(pid));
-
-	t_list* page_table = (t_list*)list_get(page_tables_per_segment, segment);
-
-	return (t_page_table_data*)list_get(page_table, page);
 }

@@ -273,7 +273,7 @@ void mov_execute(t_pcb* pcb, t_register reg1, uint32_t dl, int in_out){
 		else{
 			log_info(logger, "PID: %i - TLB MISS - Segmento: %i - Pagina: %i", pcb->id, segment_num, page_num);
 			// no esta el frame, hay que pedirlo
-			send_frame_request(socket_memoria, pcb->id, segment_num, page_num);
+			send_frame_request(socket_memoria, pcb, segment_num, page_num);
 			op_code op_code = recv_op_code(socket_memoria);
 			if(op_code == FRAME_ACCESS){
 				frame = recv_int(socket_memoria);
@@ -384,7 +384,7 @@ void replace_tlb_input(int pid, int segment_num, int page_num, int frame){
 
 
 void request_data_in(int frame, int page_offset, t_pcb* pcb, t_register reg1){
-	send_read_request(socket_memoria, pcb->id, frame, page_offset);
+	send_read_request(socket_memoria, pcb, frame, page_offset);
 	recv_and_validate_op_code_is(socket_memoria, RAM_ACCESS_READ);
 	pcb->registers[reg1] = recv_int(socket_memoria);
 	pcb->program_counter++;
@@ -392,7 +392,7 @@ void request_data_in(int frame, int page_offset, t_pcb* pcb, t_register reg1){
 
 
 void request_data_out(int frame, int page_offset, t_pcb* pcb, t_register reg1){
-	send_write_request(socket_memoria, pcb->id, frame, page_offset, pcb->registers[reg1]);
+	send_write_request(socket_memoria, pcb, frame, page_offset, pcb->registers[reg1]);
 	recv_and_validate_op_code_is(socket_memoria, RAM_ACCESS_WRITE);
 	pcb->program_counter++;
 }

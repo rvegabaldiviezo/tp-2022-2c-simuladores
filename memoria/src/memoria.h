@@ -1,4 +1,8 @@
 #include <stdbool.h>
+
+#ifndef __MEMORIA_H
+#define __MEMORIA_H
+
 typedef struct
 {
 	int memory_size;
@@ -28,4 +32,5 @@ void initialize_sockets();
 void initialize_memory_structures();
 void handle_kernel();
 void* handle_cpu(void* arg);
-t_page_table_data* access_page(int pid, int segment, int page);
+
+#endif
