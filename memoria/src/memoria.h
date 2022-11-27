@@ -19,9 +19,9 @@ typedef struct
 typedef struct
 {
 	int frame;
-	bool P;
-	bool U;
-	bool M;
+	int P;
+	int U;
+	int M;
 	int swap_pos;
 } t_page_table_data;
 

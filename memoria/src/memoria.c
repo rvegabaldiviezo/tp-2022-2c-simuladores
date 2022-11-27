@@ -46,7 +46,7 @@ pthread_t thread_cpu;
 void* ram;
 FILE* swap;
 t_list* page_tables;
-t_bitarray* frames_usage; // Frames usados 0 -> libre, 1 -> ocupado
+t_list* frames_usage; // Frames usados 0 -> libre, 1 -> ocupado
 // Key: PID, Value: lista de Tablas de Pagina
 // Key: Segmento, Value: Tabla de Pagina
 // Key: Pagina, Value: Marco
@@ -125,6 +125,13 @@ void initialize_memory_structures()
 	ftruncate(memoria_config->path_swap, sizeof(int) * memoria_config->swap_size);
 	page_tables = list_create();
 
-	int frames_count = memoria_config->page_size / memoria_config->memory_size;
-	frames_usage = bitarray_create_with_mode(malloc(frames_count), frames_count, LSB_FIRST);
+	int frames_count = memoria_config->memory_size / memoria_config->page_size;
+	frames_usage = list_create();
+
+	for(int i = 0; i < frames_count; i++)
+	{
+		list_add(frames_usage, false);
+	}
+
+	log_trace(logger, "Cantidad de frames: %i", list_size(frames_usage));
 }

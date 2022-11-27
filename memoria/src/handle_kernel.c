@@ -18,7 +18,7 @@ extern t_memoria_config* memoria_config;
 extern void* ram;
 extern FILE* swap;
 extern t_list* page_tables;
-extern t_bitarray* frames_usage;
+extern t_list* frames_usage;
 
 t_page_table_data* victim;
 
@@ -71,6 +71,8 @@ void process_started()
             page->M = 0;
             page->swap_pos = -1;
 
+            log_trace(logger, "Page: %i | Frame: %i | P:%i | U:%i | M:%i", j, page->frame, page->P, page->U, page->M);
+ 
             list_add(page_table, page);
         }
 
@@ -106,7 +108,7 @@ void process_finished()
             t_page_table_data* page = (t_page_table_data*)list_get(page_table, j);
 
             if(page->P == 1) {
-                bitarray_clean_bit(frames_usage, page->frame);
+                list_replace(frames_usage, page->frame, false);
             }
 
             page->frame = -1;
@@ -139,6 +141,7 @@ void resolve_page_fault()
 
     if(page_data->swap_pos == -1)
     {
+        log_trace(logger, "No esta en disco (Primera vez ejecutado)");
         // No esta ni en disco
         int frame = find_free_frame();
 
@@ -149,12 +152,13 @@ void resolve_page_fault()
     {
         // Esta en disco
         // Traemos los datos de disco
+        log_trace(logger, "Buscamos en disco");
         void* swap_data = read_page_from_swap(page_data);
 
         int frame = find_free_frame();
 
-        void* dest = ram + memoria_config->page_size * frame;
-        memcpy(dest, swap_data, memoria_config->page_size * sizeof(int));
+        void* dest_ram = ram + memoria_config->page_size * frame;
+        memcpy(dest_ram, swap_data, memoria_config->page_size * sizeof(int));
     }
 
     send_page_fault_resolved(socket_kernel);
@@ -182,10 +186,15 @@ void write_page_to_swap(t_page_table_data* page)
 int find_free_frame()
 {
     int frame = -1;
-    for(int i = 0; i < bitarray_get_max_bit(frames_usage); i++)
+
+    log_trace(logger, "Hay %i frame en el bitarray", list_size(frames_usage));
+
+    for(int i = 0; i < list_size(frames_usage); i++)
     {
-        if(!bitarray_test_bit(frames_usage, i)) 
+        if(!list_get(frames_usage, i)) 
         {
+            log_trace(logger, "Encontre frame libre: %i", i);
+            list_replace(frames_usage, i, true);
             frame = i;
             break;
         }
@@ -215,11 +224,12 @@ t_page_table_data* find_victim()
     {
         log_trace(logger, "Buscando victima...");
 
-        // TODO Aca rompe
-
         for(int i = 0; i < list_size(page_tables); i++)
         {
             t_list* page_table = list_get(page_tables, i);
+
+            log_trace(logger, "Buscando en Segmento: %i", i);
+
             for(int j = 0; j < list_size(page_tables); j++)
             {
                 t_page_table_data* page = list_get(page_tables, j);
