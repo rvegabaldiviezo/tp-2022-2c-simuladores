@@ -141,9 +141,9 @@ void resolve_page_fault()
 
     if(page_data->swap_pos == -1)
     {
-        log_trace(logger, "No esta en disco (Primera vez ejecutado)");
+        log_trace(logger, "No esta en disco");
         // No esta ni en disco
-        int frame = find_free_frame();
+        int frame = find_free_frame(pcb, segment, page);
 
         page_data->frame = frame;
         page_data->P = 1;
@@ -153,9 +153,9 @@ void resolve_page_fault()
         // Esta en disco
         // Traemos los datos de disco
         log_trace(logger, "Buscamos en disco");
-        void* swap_data = read_page_from_swap(page_data);
+        void* swap_data = read_page_from_swap(page_data, pcb, segment, page);
 
-        int frame = find_free_frame();
+        int frame = find_free_frame(pcb, segment, page);
 
         void* dest_ram = ram + memoria_config->page_size * frame;
         memcpy(dest_ram, swap_data, memoria_config->page_size * sizeof(int));
@@ -165,30 +165,34 @@ void resolve_page_fault()
     log_debug(logger, "Page Fault resuelto PID: %i, Segment: %i, Page: %i", pcb->id, segment, page);
 }
 
-void* read_page_from_swap(t_page_table_data* page)
+void* read_page_from_swap(t_page_table_data* page_data, t_pcb* pcb, int segment, int page)
 {
     swap = fopen(memoria_config->path_swap, "r");
-    fseek(swap, page->swap_pos, SEEK_SET);
+    fseek(swap, page_data->swap_pos, SEEK_SET);
     void* page_swap = malloc(sizeof(int) * memoria_config->page_size);
     fread(&page_swap, sizeof(int), memoria_config->page_size, swap);
+    log_info(logger, "SWAP IN -  PID: %i - Marco: %i - Page In: %i|%i", pcb->id, page_data->frame, segment, page);
     return page_swap;
 }
 
-void write_page_to_swap(t_page_table_data* page)
+void write_page_to_swap(t_page_table_data* page_data, t_pcb* pcb, int segment, int page)
 {
     swap = fopen(memoria_config->path_swap, "a");
-    void* ram_page_start = ram + page->frame * memoria_config->page_size;
+    void* ram_page_start = ram + page_data->frame * memoria_config->page_size;
     fwrite(ram_page_start, sizeof(int), memoria_config->page_size, swap);
     fclose(swap);
-    page->swap_pos = ftell(swap);
+    page_data->swap_pos = ftell(swap);
+    log_info(logger, "SWAP OUT -  PID: %i - Marco: %i - Page Out: %i|%i", pcb->id, page_data->frame, segment, page);
 }
 
-int find_free_frame()
+// Busca un frame libre, si no hay ninguno libre hace reemplazo
+int find_free_frame(t_pcb* pcb, int segment, int page)
 {
     int frame = -1;
 
     log_trace(logger, "Hay %i frame en el bitarray", list_size(frames_usage));
 
+    // Busca un frame libre
     for(int i = 0; i < list_size(frames_usage); i++)
     {
         if(!list_get(frames_usage, i)) 
@@ -200,16 +204,18 @@ int find_free_frame()
         }
     }
 
+    // No se encontro un frame libre, se hace reemplazo
     if(frame == -1)
     {
         // La memoria esta llena
-        t_page_table_data* victim = find_victim();
+        t_page_table_data* victim = find_victim(pcb, segment, page);
         
         if(victim->M == 1)
         {
             // Escribir en disco
-            write_page_to_swap(victim);
+            write_page_to_swap(victim, pcb, segment, page);
         }
+
         victim->P = 0;
         frame = victim->frame;
     }
@@ -218,7 +224,7 @@ int find_free_frame()
 }
 
 // Devuelve una pagina victima para reemplazar
-t_page_table_data* find_victim()
+t_page_table_data* find_victim(t_pcb* pcb, int segment, int page)
 {
     for(int o = 0; true; o++)
     {
@@ -232,12 +238,13 @@ t_page_table_data* find_victim()
 
             for(int j = 0; j < list_size(page_tables); j++)
             {
-                t_page_table_data* page = list_get(page_tables, j);
+                t_page_table_data* page_data = list_get(page_tables, j);
 
                 if(is_victim(page, o))
                 {
                     log_debug(logger, "Se encontro victima!");
-                    return page;
+                    log_info(logger, "REEMPLAZO - PID: %i - Marco: %i - Page Out: %i|%i - Page In: %i|%i", pcb->id, page_data->frame, i, j, segment, page);
+                    return page_data;
                 }
             }
         }

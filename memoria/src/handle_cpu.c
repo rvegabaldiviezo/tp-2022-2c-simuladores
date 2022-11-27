@@ -82,7 +82,7 @@ void frame_access()
 	if(page_data->P == 1)
 	{
 		int frame = page_data->frame;
-		log_info(logger, "PID: %i - Página: %i - Marco: %i", pcb->id, page, frame);
+		log_info(logger, "Acceso a tabla de paginas PID: %i - Página: %i - Marco: %i", pcb->id, page, frame);
 		send_frame_response(socket_cpu, frame);
 	}
 	else
