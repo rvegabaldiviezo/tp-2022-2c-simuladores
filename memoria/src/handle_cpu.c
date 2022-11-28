@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <commons/log.h>
 #include <commons/string.h>
 #include <commons/collections/list.h>
@@ -55,7 +56,15 @@ void ram_access_read()
 	int offset = recv_int(socket_cpu);
 
 	sleep(memoria_config->memory_delay);
-	send_read_response(socket_cpu, 2);
+
+	int offset_ram = frame * memoria_config->page_size + offset;
+	int value;
+	memcpy(&value, ram + offset_ram, sizeof(int));
+
+	log_info(logger, "PID: %i - Acción: LEER - Dirección física: %i", pcb->id, offset_ram);
+	log_debug(logger, "Lectura: %i", value);
+
+	send_read_response(socket_cpu, value);
 }
 void ram_access_write()
 {
@@ -65,6 +74,13 @@ void ram_access_write()
 	int value = recv_int(socket_cpu);
 
 	sleep(memoria_config->memory_delay);
+
+	int offset_ram = frame * memoria_config->page_size + offset;
+
+	memcpy(ram + offset_ram, &value, sizeof(int));
+	log_info(logger, "PID: %i - Acción: ESCRIBIR - Dirección física: %i", pcb->id, offset_ram);
+	log_debug(logger, "Escritura: %i", value);
+
 	send_write_response(socket_cpu);
 }
 void frame_access()

@@ -59,6 +59,8 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
 	}
 
+	int pantalla_delay = config_get_int_value(consola_config, "TIEMPO_PANTALLA") / 1000;
+
 	// Obtengo las instrucciones
 	t_list* instructions = parse(program_path);
 	// Obtengo los segmentos
@@ -98,6 +100,8 @@ int main(int argc, char **argv) {
 			// Recibo el valor a imprimir por pantalla
 			int pantalla = recv_int(socket_kernel);
 			printf("Resultado: %i\n", pantalla);
+			// Esperamos tiempo definido por config
+			sleep(pantalla_delay);
 			// Le aviso al Kernel que ya mostre por pantalla el valor
 			send_pantalla_response(socket_kernel);
 			break;
