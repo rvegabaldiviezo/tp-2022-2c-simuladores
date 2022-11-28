@@ -170,7 +170,7 @@ void resolve_page_fault()
         pthread_mutex_unlock(&ram_mutex);
     }
 
-    //send_tlb_consistency_check(socket_cpu_tlb, frame);
+    send_tlb_consistency_check(socket_cpu_tlb, frame);
     send_page_fault_resolved(socket_kernel);
     log_debug(logger, "Page Fault resuelto PID: %i | Segment: %i | Page: %i | Frame: %i", pcb->id, segment, page, frame);
 }

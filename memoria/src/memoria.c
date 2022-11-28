@@ -86,10 +86,10 @@ void initialize_sockets()
 	log_trace(logger, "Conexion con cpu: %i", socket_cpu);
 
 	// Conexion de Servidor con CPU TLB
-	/* int socket_memoria_cpu_tlb = start_server_module("MEMORIA_CPU_TLB");
+	int socket_memoria_cpu_tlb = start_server_module("MEMORIA_CPU_TLB");
 	log_trace(logger,"Esperando conexion con CPU TLB desde MEMORIA");
 	socket_cpu_tlb = accept(socket_memoria_cpu_tlb, NULL, NULL);
-	log_trace(logger, "Conexion con cpu tlb: %i", socket_cpu_tlb); */
+	log_trace(logger, "Conexion con cpu tlb: %i", socket_cpu_tlb);
 
 	// Conexion de Servidor con Kernel
 	int socket_memoria_kernel = start_server_module("MEMORIA_KERNEL");
