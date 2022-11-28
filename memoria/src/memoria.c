@@ -135,3 +135,29 @@ void initialize_memory_structures()
 
 	log_trace(logger, "Cantidad de frames: %i", list_size(frames_usage));
 }
+
+t_page_table_data* get_page(t_pcb* pcb, int segment, int page)
+{
+	t_segment* segment_data = list_get(pcb->segment_table, segment);
+    t_list* page_table = list_get(page_tables, segment_data->page_table_index);
+    return list_get(page_table, page);
+}
+
+
+// parametros pasados por cpu para encontrar la pagina a travez del frame
+t_page_table_data* get_page_reverse(t_pcb* pcb, int frame)
+{
+	for(int segment = 0; segment < list_size(pcb->segment_table); segment++)
+	{
+		t_segment* segment_data = list_get(pcb->segment_table, segment);
+		t_list* page_table = list_get(page_tables, segment_data->page_table_index);
+
+		for(int page = 0; page < list_size(page_table); page++)
+		{
+			t_page_table_data* page_data = list_get(page_table, page);
+
+			if(page_data->P == 1 && page_data->frame == frame)
+				return page_data;
+		}
+	}
+}

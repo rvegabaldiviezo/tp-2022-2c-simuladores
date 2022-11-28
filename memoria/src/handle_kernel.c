@@ -110,6 +110,8 @@ void process_finished()
             if(page->P == 1) {
                 list_replace(frames_usage, page->frame, false);
             }
+            
+            log_trace(logger, "Page: %i | Frame: %i | P:%i | U:%i | M:%i", j, page->frame, page->P, page->U, page->M);
 
             page->frame = -1;
             page->P = 0;
@@ -135,9 +137,7 @@ void resolve_page_fault()
 
     log_debug(logger, "Comienzo de resolucion de Page Fault para PID: %i, Segment: %i, Page: %i", pcb->id, segment, page);
 
-	t_segment* segment_data = list_get(pcb->segment_table, segment);
-    t_list* page_table = list_get(page_tables, segment_data->page_table_index);
-    t_page_table_data* page_data = list_get(page_table, page);
+    t_page_table_data* page_data = get_page(pcb, segment, page);
 
     if(page_data->swap_pos == -1)
     {

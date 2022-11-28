@@ -56,6 +56,9 @@ void ram_access_read()
 	int offset = recv_int(socket_cpu);
 
 	sleep(memoria_config->memory_delay);
+	
+	t_page_table_data* page_data = get_page_reverse(pcb, frame);
+	page_data->U = 1;
 
 	int offset_ram = frame * memoria_config->page_size + offset;
 	int value;
@@ -74,6 +77,10 @@ void ram_access_write()
 	int value = recv_int(socket_cpu);
 
 	sleep(memoria_config->memory_delay);
+
+	t_page_table_data* page_data = get_page_reverse(pcb, frame);
+	page_data->U = 1;
+	page_data->M = 1;
 
 	int offset_ram = frame * memoria_config->page_size + offset;
 

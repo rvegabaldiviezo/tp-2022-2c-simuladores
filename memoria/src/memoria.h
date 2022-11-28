@@ -32,5 +32,7 @@ void initialize_sockets();
 void initialize_memory_structures();
 void handle_kernel();
 void* handle_cpu(void* arg);
+t_page_table_data* get_page(t_pcb* pcb, int segment, int page);
+t_page_table_data* get_page_reverse(t_pcb* pcb, int frame);
 
 #endif
