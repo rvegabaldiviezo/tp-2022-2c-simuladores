@@ -15,6 +15,9 @@ extern void* ram;
 extern FILE* swap;
 extern t_list* page_tables;
 
+// Mutex
+extern pthread_mutex_t ram_mutex;
+
 void* handle_cpu(void* arg)
 {
 	/*Interaccion memoria-cpu
@@ -62,7 +65,10 @@ void ram_access_read()
 
 	int offset_ram = frame * memoria_config->page_size + offset;
 	int value;
+
+    pthread_mutex_lock(&ram_mutex);
 	memcpy(&value, ram + offset_ram, sizeof(int));
+    pthread_mutex_unlock(&ram_mutex);
 
 	log_info(logger, "PID: %i - Acción: LEER - Dirección física: %i", pcb->id, offset_ram);
 	log_debug(logger, "Lectura: %i", value);
@@ -84,7 +90,10 @@ void ram_access_write()
 
 	int offset_ram = frame * memoria_config->page_size + offset;
 
+    pthread_mutex_lock(&ram_mutex);
 	memcpy(ram + offset_ram, &value, sizeof(int));
+    pthread_mutex_unlock(&ram_mutex);
+
 	log_info(logger, "PID: %i - Acción: ESCRIBIR - Dirección física: %i", pcb->id, offset_ram);
 	log_debug(logger, "Escritura: %i", value);
 

@@ -48,9 +48,9 @@ void* ram;
 FILE* swap;
 t_list* page_tables;
 t_list* frames_usage; // Frames usados 0 -> libre, 1 -> ocupado
-// Key: PID, Value: lista de Tablas de Pagina
-// Key: Segmento, Value: Tabla de Pagina
-// Key: Pagina, Value: Marco
+
+// Mutex
+pthread_mutex_t ram_mutex;
 
 int main(int argc, char **argv) 
 {
@@ -141,6 +141,7 @@ void initialize_memory_structures()
 	}
 
 	log_trace(logger, "Cantidad de frames: %i", list_size(frames_usage));
+	pthread_mutex_init(&ram_mutex, NULL);
 }
 
 t_page_table_data* get_page(t_pcb* pcb, int segment, int page)

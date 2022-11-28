@@ -15,11 +15,15 @@ extern t_log* logger;
 extern int socket_kernel;
 extern int socket_cpu_tlb;
 extern t_memoria_config* memoria_config;
+
 // Structures
 extern void* ram;
 extern FILE* swap;
 extern t_list* page_tables;
 extern t_list* frames_usage;
+
+// Mutex
+extern pthread_mutex_t ram_mutex;
 
 t_page_table_data* victim;
 
@@ -160,8 +164,10 @@ void resolve_page_fault()
 
         frame = find_free_frame(pcb, segment, page);
 
+        pthread_mutex_lock(&ram_mutex);
         void* dest_ram = ram + memoria_config->page_size * frame;
         memcpy(dest_ram, swap_data, memoria_config->page_size * sizeof(int));
+        pthread_mutex_unlock(&ram_mutex);
     }
 
     //send_tlb_consistency_check(socket_cpu_tlb, frame);
