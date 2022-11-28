@@ -9,6 +9,7 @@ int instruction_delay,
 	socket_cpu_dispatch,
 	socket_kernel_dispatch,
 	socket_memoria,
+	socket_memoria_tlb,
 	memory_size,
 	page_size,
 	inputs_tlb,
@@ -17,7 +18,8 @@ int instruction_delay,
 long timestamp;
 char* replace_tlb;
 pthread_t thread_interrupt;
-//sem_t sem_interrupt;
+pthread_t thread_tlb_consistency;
+pthread_mutex_t sem_mutex_tlb;
 
 
 
@@ -66,6 +68,8 @@ void setup (char **argv){
 	instruction_delay = config_get_int_value(cpu_config, "RETARDO_INSTRUCCION");
 	log_trace(logger, "RETARDO_INSTRUCCION: %i ms", instruction_delay);
 
+	pthread_mutex_init(&sem_mutex_tlb, NULL);  // Inicializo mutex de TLB
+
 }
 
 
@@ -75,6 +79,8 @@ void connections(){
 	socket_memoria = start_client_module("MEMORIA_CPU");	  // CONECTAR A MEMORIA
 
 	pthread_create(&thread_interrupt, NULL, start_interrupt, NULL); // CONECTAR A KERNEL INTERRUPT (THREAD)
+
+	pthread_create(&thread_tlb_consistency, NULL, consistency_check, NULL); // CONECTAR A MEMORIA TLB (para eliminar inconsistencia)
 
 	socket_cpu_dispatch = start_server_module("CPU_DISPATCH");			// CONECTAR A KERNEL DISPATCH
 	log_trace(logger,"Esperando conexion con Kernel desde DISPATCH");	// QUEDA BLOQUEADO HASTA TENER CONEXIÓN CON KERNEL_DISPATCH
@@ -263,6 +269,8 @@ void mov_execute(t_pcb* pcb, t_register reg1, uint32_t dl, int in_out){
 		log_trace(logger,"SEGMENTATION FAULT");
 	}
 	else{
+		// Bloqueo
+		pthread_mutex_lock(&sem_mutex_tlb);
 		//Check TLB
 		int frame = check_tlb(pcb->id, segment_num, page_num);
 		//1 o 2 accesos
@@ -293,6 +301,8 @@ void mov_execute(t_pcb* pcb, t_register reg1, uint32_t dl, int in_out){
 			else if (op_code == PAGE_FAULT){
 				pf_occurred(pcb->id, segment_num, page_num);
 			}
+			// Desbloqueo
+			pthread_mutex_unlock(&sem_mutex_tlb);
 		}
 	}
 	log_tlb(logger, tlb);
@@ -407,6 +417,25 @@ void pf_occurred(int pid, int segment_num, int page_num){
 }
 
 
+void* consistency_check(void* arg) {
+	// FUNCION PARA THREAD
+	pthread_mutex_lock(&sem_mutex_tlb);
+	socket_memoria_tlb = start_client_module("MEMORIA_CPU_TLB");
+	int frame_swapped;
+	while(true){
+		frame_swapped = recv_tlb_consistency_check(socket_memoria_tlb);
+		// Bloqueo
+		for(int i = list_size(tlb) - 1; i >= 0; i--){
+			t_tlb* delete_tlb = list_get(tlb,i);
+			if(delete_tlb->frame == frame_swapped){
+				delete_tlb = list_remove(tlb,i);
+				free(delete_tlb);
+			}
+		}
+		// Desbloqueo
+		pthread_mutex_unlock(&sem_mutex_tlb);
+	}
+}
 
 /*
    FALTA AGREGAR UN HILO QUE ESCUCHE LA MEMORIA Y SE ENCARGUE DE LIMPIAR LA TLB CON LAS COSAS

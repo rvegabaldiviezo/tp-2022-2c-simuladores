@@ -5,7 +5,6 @@
 #include <math.h>
 #include <string.h>
 #include <pthread.h>
-#include <semaphore.h>
 #include <commons/log.h>
 #include <commons/config.h>
 #include <shared/log_extras.h>
@@ -54,3 +53,5 @@ void request_data_in(int frame, int page_offset, t_pcb* pcb, t_register reg1);
 void request_data_out(int frame, int page_offset, t_pcb* pcb, t_register reg1);
 
 void pf_occurred(int pid, int segment_num, int page_num);
+
+void* consistency_check(void* arg);
