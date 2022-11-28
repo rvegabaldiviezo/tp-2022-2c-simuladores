@@ -419,12 +419,12 @@ void pf_occurred(int pid, int segment_num, int page_num){
 
 void* consistency_check(void* arg) {
 	// FUNCION PARA THREAD
-	pthread_mutex_lock(&sem_mutex_tlb);
 	socket_memoria_tlb = start_client_module("MEMORIA_CPU_TLB");
 	int frame_swapped;
 	while(true){
 		frame_swapped = recv_tlb_consistency_check(socket_memoria_tlb);
 		// Bloqueo
+		pthread_mutex_lock(&sem_mutex_tlb);
 		for(int i = list_size(tlb) - 1; i >= 0; i--){
 			t_tlb* delete_tlb = list_get(tlb,i);
 			if(delete_tlb->frame == frame_swapped){
