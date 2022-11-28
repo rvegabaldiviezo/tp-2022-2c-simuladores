@@ -627,6 +627,17 @@ void send_read_response(int socket, int value)
 	send_buffer(socket, buffer);
 	destroy_buffer(buffer);
 }
+void send_tlb_consistency_check(int socket, int frame)
+{
+    t_buffer* buffer = create_buffer();
+	add_to_buffer(buffer, &frame, sizeof(frame));
+	send_buffer(socket, buffer);
+	destroy_buffer(buffer);
+}
+int recv_tlb_consistency_check(int socket)
+{
+    return recv_int(socket);
+}
 
 
 

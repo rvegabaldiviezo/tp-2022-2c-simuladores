@@ -13,6 +13,7 @@
 
 extern t_log* logger;
 extern int socket_kernel;
+extern int socket_cpu_tlb;
 extern t_memoria_config* memoria_config;
 // Structures
 extern void* ram;
@@ -139,11 +140,13 @@ void resolve_page_fault()
 
     t_page_table_data* page_data = get_page(pcb, segment, page);
 
+    int frame;
+
     if(page_data->swap_pos == -1)
     {
         log_trace(logger, "No esta en disco");
         // No esta ni en disco
-        int frame = find_free_frame(pcb, segment, page);
+        frame = find_free_frame(pcb, segment, page);
 
         page_data->frame = frame;
         page_data->P = 1;
@@ -155,14 +158,15 @@ void resolve_page_fault()
         log_trace(logger, "Buscamos en disco");
         void* swap_data = read_page_from_swap(page_data, pcb, segment, page);
 
-        int frame = find_free_frame(pcb, segment, page);
+        frame = find_free_frame(pcb, segment, page);
 
         void* dest_ram = ram + memoria_config->page_size * frame;
         memcpy(dest_ram, swap_data, memoria_config->page_size * sizeof(int));
     }
 
+    //send_tlb_consistency_check(socket_cpu_tlb, frame);
     send_page_fault_resolved(socket_kernel);
-    log_debug(logger, "Page Fault resuelto PID: %i, Segment: %i, Page: %i", pcb->id, segment, page);
+    log_debug(logger, "Page Fault resuelto PID: %i | Segment: %i | Page: %i | Frame: %i", pcb->id, segment, page, frame);
 }
 
 void* read_page_from_swap(t_page_table_data* page_data, t_pcb* pcb, int segment, int page)

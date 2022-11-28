@@ -63,6 +63,8 @@ void send_frame_response(int socket, int frame);
 void send_page_fault(int socket);
 void send_write_response(int socket);
 void send_read_response(int socket, int value);
+void send_tlb_consistency_check(int socket, int frame);
+int recv_tlb_consistency_check(int socket);
 // CPU -> Memoria
 int recv_memory_size(int socket);
 int recv_page_size(int socket);
