@@ -1,6 +1,7 @@
 #!/usr/bin/sudo bash
 
 CONFIG="default"
+PROGRAM_NUMBER="1"
 MODULO=""
 
 CYAN='\033[0;36m'
@@ -12,17 +13,24 @@ killall terminator
 while test $# -gt 0
 do
   CONFIG="default"
+  PROGRAM_NUMBER="1"
   MODULO=$1
 
   shift
 
-  if [ -d "config/$1" ]; then
-    CONFIG=$1
-    shift
+  if ! [[ -z "$1" ]]; then
+    if [ -d "config/$1" ]; then
+      CONFIG=$1
+      shift
+      if [ -f "config/$CONFIG/program$1.txt" ]; then
+        PROGRAM_NUMBER=$1
+        shift
+      fi
+    fi
   fi
 
-  echo -e "Abirendo terminal para $CYAN$MODULO$NC con config $CYAN$CONFIG$NC"
-  terminator --geometry 960 --title $MODULO  -e "./run $MODULO $CONFIG; bash" &
+  echo -e "Abirendo terminal para $CYAN$MODULO$NC con config $CYAN$CONFIG$NC y$CYAN program$PROGRAM_NUMBER.txt$NC"
+  terminator --geometry 960 --title $MODULO  -e "./run $MODULO $CONFIG $PROGRAM_NUMBER; bash" &
   sleep 1s
 
 done
