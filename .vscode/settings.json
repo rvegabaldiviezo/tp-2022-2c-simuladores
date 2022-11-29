@@ -1,6 +1,41 @@
 {
   "files.associations": {
     "*.vue": "vue",
-    "estructuras.h": "c"
-  }
+    "estructuras.h": "c",
+    "log.h": "c",
+    "string.h": "c",
+    "parser.h": "c",
+    "dictionary.h": "c",
+    "structures.h": "c",
+    "stdlib.h": "c",
+    "panel.h": "c",
+    "list.h": "c",
+    "stdio.h": "c",
+    "connection.h": "c",
+    "environment_variables.h": "c",
+    "config.h": "c",
+    "socket.h": "c",
+    "limits": "c",
+    "serialization.h": "c",
+    "structures_translation.h": "c",
+    "log_extras.h": "c",
+    "node.h": "c",
+    "scheduller.h": "c",
+    "kernel.h": "c",
+    "pthread.h": "c",
+    "queue.h": "c",
+    "semaphore.h": "c",
+    "stdint.h": "c",
+    "unistd.h": "c",
+    "type_traits": "c",
+    "memoria.h": "c",
+    "handle_cpu.h": "c",
+    "handle_kernel.h": "c",
+    "stdbool.h": "c",
+    "cmath": "c",
+    "math.h": "c",
+    "bitarray.h": "c",
+    "cpu.h": "c"
+  },
+  "C_Cpp.errorSquiggles": "Disabled"
 }

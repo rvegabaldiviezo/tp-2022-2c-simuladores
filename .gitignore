@@ -22,6 +22,12 @@
 *.la
 *.lo
 
+# Eclipse settings
+.settings
+
+# Logs
+*.log
+
 # Shared objects (inc. Windows DLLs)
 *.dll
 *.so
@@ -50,3 +56,17 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# No subimos los ejecutables de los modulos
+*/Debug/kernel
+*/Debug/cpu
+*/Debug/consola
+*/Debug/memoria
+*/Debug/shared
+
+kernel/.gitignore
+cpu/.gitignore
+consola/.gitignore
+memoria/.gitignore
+shared/.gitignore
+
