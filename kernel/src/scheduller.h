@@ -11,3 +11,6 @@ void execute_algorithm();
 void wait_cpu_dispatch();
 void* start_quantum(void* arg);
 void* handle_io(void* arg);
+void* handle_teclado(void* arg);
+void* handle_pantalla(void* arg);
+void* handle_page_fault(void* arg);

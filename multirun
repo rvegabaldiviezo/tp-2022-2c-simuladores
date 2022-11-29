@@ -32,7 +32,12 @@ do
   fi
 
   echo -e "Abirendo terminal para $CYAN$MODULO$NC con config $CYAN$CONFIG$NC y$CYAN program$PROGRAM_NUMBER.txt$NC"
-  terminator --geometry 960 --title $MODULO  -e "./run $MODULO $CONFIG $PROGRAM_NUMBER; bash" &
+
+  if [ $MODULO = "consola" ]; then
+    terminator --geometry 960 --title "$MODULO program$PROGRAM_NUMBER"  -e "./run $MODULO $CONFIG $PROGRAM_NUMBER; bash" &
+  else
+    terminator --geometry 960 --title $MODULO  -e "./run $MODULO $CONFIG $PROGRAM_NUMBER; bash" &
+  fi
   sleep 0.5s
 
 done

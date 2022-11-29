@@ -54,15 +54,19 @@
 ```bash
 ./run [modulo] [config]
 ```
+### ACORDARSE DE AGREGAR TECLADO Y PANTALLA COMO DISPOSITIVOS, ADEMAS ASIGNARLES UN TIEMPO (0 ESTA BIEN)
 ## Pruebas
 #### Prueba Base
 ```bash
 ./multirun memoria base cpu base kernel base consola base 1 consola base 2 consola base 3
 ```
-## ACORDARSE DE AGREGAR TECLADO Y PANTALLA COMO DISPOSITIVOS, ADEMAS ASIGNARLES UN TIEMPO (0 ESTA BIEN)
 #### Prueba Planificacion Base
 ```bash
 ./multirun memoria planificacion_base cpu planificacion_base kernel planificacion_base consola planificacion_base 1 consola planificacion_base 2 consola planificacion_base 3 consola planificacion_base 4
+```
+#### Prueba Planificacion Full
+```bash
+./multirun memoria planificacion_full cpu planificacion_full kernel planificacion_full consola planificacion_full 1 consola planificacion_full 1 consola planificacion_full 2 consola planificacion_full 2
 ```
 ## TESTING
 #### Para probar muchos modulos a la vez (config es opcional)

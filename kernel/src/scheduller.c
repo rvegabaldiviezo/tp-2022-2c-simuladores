@@ -192,12 +192,30 @@ void block_state(t_pcb* pcb, char* device, int arg)
     io_data->device = device;
     io_data->arg = arg;
 
-    t_queue* device_queue = (t_queue*)dictionary_get(io_queues, device);
-    sem_t* io_sem = (sem_t*)dictionary_get(io_semaphores, device);
+    if(strcmp(device, "TECLADO") == 0)
+    {
+        // Creo un hilo para manejar teclado
+        log_trace(logger, "Se crea hilo para manejar TECLADO");
+        pthread_t tid;
+        pthread_create(&tid, NULL, handle_teclado, io_data);
+    }
+    else if(strcmp(device, "PANTALLA") == 0)
+    {
+        // Creo un hilo para manejar pantalla
+        log_trace(logger, "Se crea hilo para manejar PANTALLA");
+        pthread_t tid;
+        pthread_create(&tid, NULL, handle_pantalla, io_data);
+    }
+    else
+    {
+        // Para el resto de los dispositivos, se encolan
+        t_queue* device_queue = (t_queue*)dictionary_get(io_queues, device);
+        sem_t* io_sem = (sem_t*)dictionary_get(io_semaphores, device);
 
-    queue_push(device_queue, io_data);
-    log_trace(logger, "Encolo en dispositivo: %s", device);
-    sem_post(io_sem);
+        queue_push(device_queue, io_data);
+        log_trace(logger, "Encolo en dispositivo: %s", device);
+        sem_post(io_sem);
+    }
 }
 
 // Hilo para manejar un page fault
@@ -213,6 +231,43 @@ void* handle_page_fault(void* arg)
     ready_state_from_page_fault(pf->pcb);
 }
 
+// TODO PANTALLA y TECLADO tienen que ejecutar sin encolarse
+void* handle_pantalla(void* arg)
+{
+    t_io* io_data = (t_io*)arg;
+    t_pcb* pcb = io_data->pcb;
+    t_register reg = (t_register)io_data->arg;
+
+    log_debug(logger, "PID: %i - Envio a consola N°%i que muestre %i por PANTALLA", pcb->id, pcb->socket_consola, pcb->registers[reg]);
+    // Aviso a consola que muestre algo por pantalla
+    send_pantalla(pcb->socket_consola, pcb->registers[reg]);
+    // Espero a que la consola me confirme que llego una pantalla
+    recv_and_validate_op_code_is(pcb->socket_consola, PANTALLA);
+    log_debug(logger, "PID: %i - Recibi de consola N°%i confirmacion que se mostro el %i por PANTALLA", pcb->id, pcb->socket_consola, pcb->registers[reg]);
+    // Desbloqueamos el proceso
+    ready_state_from_io(io_data->pcb);
+}
+
+void* handle_teclado(void* arg)
+{
+    t_io* io_data = (t_io*)arg;
+    t_pcb* pcb = io_data->pcb;
+    t_register reg = (t_register)io_data->arg;
+
+    // Aviso a consola que escriba algo por teclado
+    log_debug(logger, "PID: %i - Envio a consola N°%i a que escriba un valor por TECLADO", pcb->id, pcb->socket_consola);
+    send_teclado(pcb->socket_consola);
+    // Me aseguro que la consola haya devuelto una respuesta por TECLADO
+    recv_and_validate_op_code_is(pcb->socket_consola, TECLADO);
+    // Recivo el valor del teclado
+    int value = recv_int(pcb->socket_consola);
+    log_debug(logger, "PID: %i - Recibi de consola N°%i el valor %i por TECLADO", pcb->id, pcb->socket_consola, value);
+    // Lo guardo en el registro indicado por CPU
+    pcb->registers[reg] = value;
+    // Desbloqueamos el proceso
+    ready_state_from_io(io_data->pcb);
+}
+
 void* handle_io(void* arg)
 {
     char* device = (char*)arg;
@@ -224,35 +279,8 @@ void* handle_io(void* arg)
     while(true) {
         sem_wait(io_sem);
         t_io* io_data = (t_io*)queue_pop(device_queue);
-
-        if(strcmp(device, "TECLADO") == 0) {
-            t_pcb* pcb = io_data->pcb;
-            t_register reg = (t_register)io_data->arg;
-
-            // Aviso a consola que escriba algo por teclado
-            log_debug(logger, "PID: %i - Envio a consola N°%i a que escriba un valor por TECLADO", pcb->id, pcb->socket_consola);
-            send_teclado(pcb->socket_consola);
-            // Me aseguro que la consola haya devuelto una respuesta por TECLADO
-            recv_and_validate_op_code_is(pcb->socket_consola, TECLADO);
-            // Recivo el valor del teclado
-            int value = recv_int(pcb->socket_consola);
-            log_debug(logger, "PID: %i - Recibi de consola N°%i el valor %i por TECLADO", pcb->id, pcb->socket_consola, value);
-            // Lo guardo en el registro indicado por CPU
-            pcb->registers[reg] = value;
-
-        } else if(strcmp(device, "PANTALLA") == 0) {
-            t_pcb* pcb = io_data->pcb;
-            t_register reg = (t_register)io_data->arg;
-
-            log_debug(logger, "PID: %i - Envio a consola N°%i que muestre %i por PANTALLA", pcb->id, pcb->socket_consola, pcb->registers[reg]);
-            // Aviso a consola que muestre algo por pantalla
-            send_pantalla(pcb->socket_consola, pcb->registers[reg]);
-            // Espero a que la consola me confirme que llego una pantalla
-            recv_and_validate_op_code_is(pcb->socket_consola, PANTALLA);
-        } else {
-            log_debug(logger, "Dispositivo %s usado por PID: %i", device, io_data->pcb->id);
-            usleep(io_data->arg * time * 1000);
-        }
+        log_debug(logger, "Dispositivo %s usado por PID: %i", device, io_data->pcb->id);
+        usleep(io_data->arg * time * 1000);
         // Se termino de resolver el IO
         // Desbloqueamos el proceso
         ready_state_from_io(io_data->pcb);
