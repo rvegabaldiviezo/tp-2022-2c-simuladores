@@ -34,7 +34,8 @@
     "stdbool.h": "c",
     "cmath": "c",
     "math.h": "c",
-    "bitarray.h": "c"
+    "bitarray.h": "c",
+    "cpu.h": "c"
   },
   "C_Cpp.errorSquiggles": "Disabled"
 }

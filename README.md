@@ -46,6 +46,10 @@
 ```bash
 ./commons
 ```
+#### Segundo compilar los modulos
+```bash
+./buildall
+```
 #### Luego ejecutar los modulos
 ```bash
 ./run [modulo] [config]
@@ -53,7 +57,7 @@
 ## TESTING
 #### Para probar muchos modulos a la vez (config es opcional)
 ```bash
-./multirun [config]? [modulo1] [modulo2] [modulo3] [modulo4]
+./multirun [modulo1] [config]? [program?] [modulo2] [config]? [program?]...
 ```
 Esto abre multiples terminales y ejecuta los modulos en el orden indicado usando la configuracion indicada (si no se pasa configuracion ejecuta los modulos con la config default)
 
@@ -63,5 +67,5 @@ Ejemplo: Abrir **cpu** despues **kernel** y por ultimo **consola** usando la con
 ```
 Ejemplo: Abrir **memoria** y despues **cpu** usando la config **base1**
 ```bash
-./multirun base1 memoria cpu
+./multirun memoria cpu
 ```

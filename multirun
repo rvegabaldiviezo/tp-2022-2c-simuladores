@@ -10,6 +10,8 @@ NC='\033[0m'
 
 killall terminator
 
+./buildall
+
 while test $# -gt 0
 do
   CONFIG="default"
@@ -31,7 +33,7 @@ do
 
   echo -e "Abirendo terminal para $CYAN$MODULO$NC con config $CYAN$CONFIG$NC y$CYAN program$PROGRAM_NUMBER.txt$NC"
   terminator --geometry 960 --title $MODULO  -e "./run $MODULO $CONFIG $PROGRAM_NUMBER; bash" &
-  sleep 1s
+  sleep 0.25s
 
 done
 

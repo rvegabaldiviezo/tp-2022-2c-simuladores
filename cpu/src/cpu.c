@@ -42,7 +42,7 @@ void setup (char **argv){
 
 	// Logger
 
-	logger = log_create("cpu.log", "CPU", true, LOG_LEVEL_TRACE);
+	logger = log_create("cpu.log", "CPU", true, LOG_LEVEL_INFO);
 
 	// Creo config
 
@@ -239,7 +239,7 @@ void* start_interrupt(void* arg) {
 void set_execute(t_pcb* pcb, t_register reg1, uint32_t param1){
 
 	pcb->registers[reg1] = param1;
-	sleep((int)(instruction_delay * 0.001));
+	usleep(instruction_delay * 1000);
 
 }
 
@@ -248,7 +248,7 @@ void set_execute(t_pcb* pcb, t_register reg1, uint32_t param1){
 void add_execute(t_pcb* pcb, t_register reg1, t_register reg2){
 
 	pcb->registers[reg1] = pcb->registers[reg1]+pcb->registers[reg2];
-	sleep((int)(instruction_delay * 0.001));
+	usleep(instruction_delay * 1000);
 
 }
 

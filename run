@@ -10,11 +10,6 @@ CYAN='\033[0;36m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-./build $MODULO
-if [ $? -ne 0 ]; then
-    exit 1
-fi
-
 echo -e ""
 echo -e "========================================================"
 echo -e "============ COMIENZO EJECUCION DE ${CYAN}$MODULO${NC} ============="

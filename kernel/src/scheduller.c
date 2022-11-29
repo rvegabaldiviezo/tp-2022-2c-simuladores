@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <time.h>
+#include <stdbool.h>
 #include <signal.h>
 #include <semaphore.h>
 #include <commons/collections/queue.h>
@@ -248,7 +250,7 @@ void* handle_io(void* arg)
             recv_and_validate_op_code_is(pcb->socket_consola, PANTALLA);
         } else {
             log_debug(logger, "Dispositivo %s usado por PID: %i", device, io_data->pcb->id);
-            sleep(io_data->arg * time);
+            usleep(io_data->arg * time * 1000);
         }
         // Se termino de resolver el IO
         // Desbloqueamos el proceso
@@ -263,6 +265,8 @@ void execute_algorithm()
 {
     log_trace(logger, "Esperando a que llegue un proceso en READY o NEW...");
     sem_wait(&can_execute);
+
+    bool use_quantum = scheduling_algorithm == RR;
 
     t_pcb* pcb;
     switch (scheduling_algorithm)
@@ -284,6 +288,7 @@ void execute_algorithm()
         if(queue_size(ready_1_queue) > 0) {
             pcb = (t_pcb*)queue_pop(ready_1_queue);
             log_info(logger, "PID: %i - Estado Anterior: READY - Estado Actual: EXECUTE", pcb->id);
+            use_quantum = true;
         }
         else if(queue_size(ready_2_queue) > 0) {
             pcb = (t_pcb*)queue_pop(ready_2_queue);
@@ -299,7 +304,7 @@ void execute_algorithm()
 
     send_pcb(socket_cpu_dispatch, pcb);
     // Empezamos el thread de quantum
-    if(scheduling_algorithm != FIFO) {
+    if(use_quantum) {
 	    pthread_create(&thread_interrupt, NULL, start_quantum, NULL); // thread interrupt
     }
 }
@@ -383,7 +388,7 @@ void wait_cpu_dispatch()
 void* start_quantum(void* arg)
 {
     log_trace(logger, "Se crea hilo para INTERRUPT");
-    sleep((int)(quantum_rr * 0.001));
+    usleep(quantum_rr * 1000);
     send_interrupt(socket_cpu_interrupt);
-    log_trace(logger, "Envie interrupcion por Quantum tras %i segundos", (int)(quantum_rr * 0.001));
+    log_trace(logger, "Envie interrupcion por Quantum tras %i milisegundos", quantum_rr);
 }

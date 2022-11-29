@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <ctype.h>
 #include <commons/log.h>
 #include <commons/config.h>
@@ -50,7 +51,7 @@ int main(int argc, char **argv) {
 	char* consola_config_path = argv[1];
 	char* program_path = argv[2];
 
-	logger = log_create("consola.log", "consola", true, LOG_LEVEL_TRACE);
+	logger = log_create("consola.log", "consola", true, LOG_LEVEL_INFO);
 	// Obtengo la config de consola
 	consola_config = config_create(consola_config_path);
 
@@ -59,7 +60,7 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
 	}
 
-	int pantalla_delay = config_get_int_value(consola_config, "TIEMPO_PANTALLA") / 1000;
+	int pantalla_delay = config_get_int_value(consola_config, "TIEMPO_PANTALLA");
 
 	// Obtengo las instrucciones
 	t_list* instructions = parse(program_path);
@@ -101,7 +102,7 @@ int main(int argc, char **argv) {
 			int pantalla = recv_int(socket_kernel);
 			printf("Resultado: %i\n", pantalla);
 			// Esperamos tiempo definido por config
-			sleep(pantalla_delay);
+			usleep(pantalla_delay * 1000);
 			// Le aviso al Kernel que ya mostre por pantalla el valor
 			send_pantalla_response(socket_kernel);
 			break;

@@ -74,7 +74,7 @@ int main(int argc, char **argv)
 
 void initialize_logger(char **argv)
 {
-	logger = log_create("memoria.log", "memoria", true, LOG_LEVEL_TRACE);
+	logger = log_create("memoria.log", "memoria", true, LOG_LEVEL_INFO);
 }
 
 void initialize_sockets()
@@ -116,10 +116,10 @@ void initialize_config(char **argv)
 	memoria_config->memory_size = config_get_int_value(config, "TAM_MEMORIA");
 	memoria_config->page_size = config_get_int_value(config, "TAM_PAGINA");
 	memoria_config->inputs_table = config_get_int_value(config, "ENTRADAS_POR_TABLA");
-	memoria_config->memory_delay = config_get_int_value(config, "RETARDO_MEMORIA") * 0.001;
+	memoria_config->memory_delay = config_get_int_value(config, "RETARDO_MEMORIA");
 	memoria_config->replace_algorithm = config_get_string_value(config, "ALGORITMO_REEMPLAZO");
 	memoria_config->frames_per_process = config_get_int_value(config, "MARCOS_POR_PROCESO");
-	memoria_config->swap_delay = config_get_int_value(config, "RETARDO_SWAP") * 0.001;
+	memoria_config->swap_delay = config_get_int_value(config, "RETARDO_SWAP");
 	memoria_config->path_swap = config_get_string_value(config, "PATH_SWAP");
 	memoria_config->swap_size = config_get_int_value(config, "TAMANIO_SWAP");
 }

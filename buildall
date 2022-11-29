@@ -1,0 +1,15 @@
+#!/usr/bin/sudo bash
+
+./buildshared
+
+declare -a arr=("memoria" "cpu" "kernel" "consola")
+
+## now loop through the above array
+for i in "${arr[@]}"
+do
+   echo "$i"
+   ./build $i
+    if [ $? -ne 0 ]; then
+        exit 1
+    fi
+done

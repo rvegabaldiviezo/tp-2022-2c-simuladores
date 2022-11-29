@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <math.h>
 #include <string.h>
+#include <time.h>
 #include <pthread.h>
 #include <commons/log.h>
 #include <commons/config.h>

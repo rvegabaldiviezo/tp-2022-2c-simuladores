@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <time.h>
 #include <commons/log.h>
 #include <commons/string.h>
 #include <commons/collections/list.h>
@@ -58,7 +59,7 @@ void ram_access_read()
 	int frame = recv_int(socket_cpu);
 	int offset = recv_int(socket_cpu);
 
-	sleep(memoria_config->memory_delay);
+	usleep(memoria_config->memory_delay * 1000);
 	
 	t_page_table_data* page_data = get_page_reverse(pcb, frame);
 	page_data->U = 1;
@@ -82,7 +83,7 @@ void ram_access_write()
 	int offset = recv_int(socket_cpu);
 	int value = recv_int(socket_cpu);
 
-	sleep(memoria_config->memory_delay);
+	usleep(memoria_config->memory_delay * 1000);
 
 	t_page_table_data* page_data = get_page_reverse(pcb, frame);
 	page_data->U = 1;
@@ -109,7 +110,7 @@ void frame_access()
 	t_list* page_table = list_get(page_tables, segment_data->page_table_index);
 	t_page_table_data* page_data = list_get(page_table, page);
 
-	sleep(memoria_config->memory_delay);
+	usleep(memoria_config->memory_delay * 1000);
 
 	if(page_data->P == 1)
 	{

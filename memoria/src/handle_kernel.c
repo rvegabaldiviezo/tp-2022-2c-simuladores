@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdbool.h>
+#include <time.h>
 #include <stdio.h>
 #include <commons/log.h>
 #include <commons/string.h>
@@ -169,6 +170,8 @@ void resolve_page_fault()
         memcpy(dest_ram, swap_data, memoria_config->page_size * sizeof(int));
         pthread_mutex_unlock(&ram_mutex);
     }
+
+    usleep(memoria_config->swap_delay * 1000);
 
     send_tlb_consistency_check(socket_cpu_tlb, frame);
     send_page_fault_resolved(socket_kernel);
