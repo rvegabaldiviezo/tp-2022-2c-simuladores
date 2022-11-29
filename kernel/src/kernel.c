@@ -89,6 +89,7 @@ void initialize_config(char **argv)
 		scheduling_algorithm = FEEDBACK;
 
 	quantum_rr = config_get_int_value(config, "QUANTUM_RR");
+	log_trace(logger, "Configuracion cargada");
 }
 
 void initialize_sockets()

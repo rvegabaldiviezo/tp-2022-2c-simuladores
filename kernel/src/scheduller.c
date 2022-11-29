@@ -81,6 +81,7 @@ void initialize_scheduller()
     }
 
     sem_init(&can_execute, 0, 0);
+	log_trace(logger, "Scheduller inicializado");
 }
 
 void log_ready()
