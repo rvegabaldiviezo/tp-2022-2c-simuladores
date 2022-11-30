@@ -28,8 +28,8 @@ void* handle_cpu(void* arg)
 	 *mov in, code 1: mov out). El otro caso es el acceso cuando la tlb del cpu hace TLB miss, por lo tanto hay que
 	 *retornarle FRAME segun PID, SEG, PAG para que lo guarde en su tlb. 
 	 */
-	log_trace(logger, "Envio a la CPU memory_size: %i y page_size: %i", memoria_config->memory_size, memoria_config->page_size);
-	send_memdata(socket_cpu, memoria_config->memory_size, memoria_config->page_size);  //handshake con cpu
+	log_trace(logger, "Envio a la CPU inputs_table: %i y page_size: %i", memoria_config->inputs_table, memoria_config->page_size);
+	send_memdata(socket_cpu, memoria_config->inputs_table, memoria_config->page_size);  //handshake con cpu
 
 	while(true)
 	{

@@ -68,6 +68,10 @@
 ```bash
 ./multirun memoria planificacion_full cpu planificacion_full kernel planificacion_full consola planificacion_full 1 consola planificacion_full 1 consola planificacion_full 2 consola planificacion_full 2
 ```
+#### Prueba Memoria
+```bash
+./multirun memoria memoria_modulos cpu memoria_modulos kernel memoria_modulos consola memoria_consola1 consola memoria_consola2 consola memoria_consola3
+```
 ## TESTING
 #### Para probar muchos modulos a la vez (config es opcional)
 ```bash

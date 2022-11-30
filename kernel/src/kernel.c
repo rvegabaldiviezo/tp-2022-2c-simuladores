@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <time.h>
 #include <unistd.h>
 #include <commons/log.h>
 #include <commons/config.h>
@@ -40,6 +41,7 @@ t_list* io_times_list;
 int socket_cpu_interrupt;
 int socket_cpu_dispatch;
 int socket_memoria;
+int socket_memoria_page_fault;
 
 // Threads
 pthread_t thread_schedulling;
@@ -95,8 +97,12 @@ void initialize_config(char **argv)
 void initialize_sockets()
 {
 	socket_cpu_interrupt = start_client_module("CPU_INTERRUPT");
+	usleep(10000);
 	socket_cpu_dispatch = start_client_module("CPU_DISPATCH");
+	usleep(10000);
 	socket_memoria = start_client_module("MEMORIA_KERNEL");
+	usleep(10000);
+	socket_memoria_page_fault = start_client_module("MEMORIA_KERNEL_PAGE_FAULT");
 }
 
 int process_count = 0;

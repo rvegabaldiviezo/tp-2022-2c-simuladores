@@ -10,7 +10,7 @@ int instruction_delay,
 	socket_kernel_dispatch,
 	socket_memoria,
 	socket_memoria_tlb,
-	memory_size,
+	inputs_table_memory,
 	page_size,
 	inputs_tlb,
 	pf_segment,
@@ -87,10 +87,10 @@ void connections(){
 	socket_kernel_dispatch = accept(socket_cpu_dispatch, NULL, NULL);
 	log_trace(logger, "Conexion con kernel dispatch: %i", socket_kernel_dispatch);
 
-	memory_size = recv_memory_size(socket_memoria);
-	page_size = recv_page_size(socket_memoria);
+	inputs_table_memory = recv_int(socket_memoria);
+	page_size = recv_int(socket_memoria);
 
-	log_trace(logger, "Memory Size: %i", memory_size);
+	log_trace(logger, "Memory Size: %i", inputs_table_memory);
 	log_trace(logger, "Page Size: %i", page_size);
 
 }
@@ -285,16 +285,22 @@ void mov_execute(t_pcb* pcb, t_register reg1, uint32_t dl, int in_out){
 			op_code op_code = recv_op_code(socket_memoria);
 			if(op_code == FRAME_ACCESS){
 				frame = recv_int(socket_memoria);
-				// agrego a lista o reemplazo?
-				if(list_size(tlb) < inputs_tlb){
-					add_to_tlb(pcb->id, segment_num, page_num, frame);
-				}
-				else{
-					replace_tlb_input(pcb->id, segment_num, page_num, frame);
-				}
-				for(int i = 0; i < list_size(tlb); i++){
-					t_tlb* aux_tlb = list_get(tlb,i);
-					log_info(logger, "%i|PID:%i|SEGMENTO:%i|PAGINA:%i|MARCO:%i", i, aux_tlb->pid, aux_tlb->segment, aux_tlb->page, aux_tlb->frame);
+				log_trace(logger, "Frame Recibido: %i", frame);
+				if(inputs_tlb > 0) 
+				{
+					// agrego a lista o reemplazo?
+					if(list_size(tlb) < inputs_tlb){
+						add_to_tlb(pcb->id, segment_num, page_num, frame);
+						log_trace(logger, "Agrego entrada a la TLB");
+					}
+					else{
+						replace_tlb_input(pcb->id, segment_num, page_num, frame);
+						log_trace(logger, "Replace entrada en la TLB");
+					}
+					for(int i = 0; i < list_size(tlb); i++){
+						t_tlb* aux_tlb = list_get(tlb,i);
+						log_info(logger, "%i|PID:%i|SEGMENTO:%i|PAGINA:%i|MARCO:%i", i, aux_tlb->pid, aux_tlb->segment, aux_tlb->page, aux_tlb->frame);
+					}
 				}
 				tlb_access(pcb, segment_num, page_num, frame, page_offset, reg1, in_out);
 			}
@@ -310,7 +316,7 @@ void mov_execute(t_pcb* pcb, t_register reg1, uint32_t dl, int in_out){
 
 
 void mmu (int dl, int* segment_max_size, int* segment_num, int* segment_offset, int* page_num, int* page_offset){
-	*segment_max_size = memory_size * page_size;
+	*segment_max_size = inputs_table_memory * page_size;
 	*segment_num = floor(dl / *segment_max_size);
 	*segment_offset = dl % *segment_max_size;
 	*page_num = floor(*segment_offset / page_size);

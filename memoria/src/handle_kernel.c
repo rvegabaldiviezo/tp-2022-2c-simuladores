@@ -15,6 +15,7 @@
 extern t_log* logger;
 extern int socket_kernel;
 extern int socket_cpu_tlb;
+extern int socket_kernel_page_fault;
 extern t_memoria_config* memoria_config;
 
 // Structures
@@ -143,6 +144,8 @@ void resolve_page_fault()
 
     log_debug(logger, "Comienzo de resolucion de Page Fault para PID: %i, Segment: %i, Page: %i", pcb->id, segment, page);
 
+    usleep(memoria_config->swap_delay * 1000);
+
     t_page_table_data* page_data = get_page(pcb, segment, page);
 
     int frame;
@@ -161,9 +164,14 @@ void resolve_page_fault()
         // Esta en disco
         // Traemos los datos de disco
         log_trace(logger, "Buscamos en disco");
-        void* swap_data = read_page_from_swap(page_data, pcb, segment, page);
+        int* swap_data = read_page_from_swap(page_data, pcb, segment, page);
 
         frame = find_free_frame(pcb, segment, page);
+
+        page_data->frame = frame;
+        page_data->P = 1;
+        page_data->M = 0;
+        page_data->U = 0;
 
         pthread_mutex_lock(&ram_mutex);
         void* dest_ram = ram + memoria_config->page_size * frame;
@@ -171,20 +179,21 @@ void resolve_page_fault()
         pthread_mutex_unlock(&ram_mutex);
     }
 
-    usleep(memoria_config->swap_delay * 1000);
-
     send_tlb_consistency_check(socket_cpu_tlb, frame);
-    send_page_fault_resolved(socket_kernel);
+    send_page_fault_resolved(socket_kernel_page_fault, pcb);
     log_debug(logger, "Page Fault resuelto PID: %i | Segment: %i | Page: %i | Frame: %i", pcb->id, segment, page, frame);
 }
 
-void* read_page_from_swap(t_page_table_data* page_data, t_pcb* pcb, int segment, int page)
+int* read_page_from_swap(t_page_table_data* page_data, t_pcb* pcb, int segment, int page)
 {
     swap = fopen(memoria_config->path_swap, "r");
     fseek(swap, page_data->swap_pos, SEEK_SET);
-    void* page_swap = malloc(sizeof(int) * memoria_config->page_size);
-    fread(&page_swap, sizeof(int), memoria_config->page_size, swap);
+    log_trace(logger, "Nos posicionamos en %i", ftell(swap));
+    int* page_swap = malloc(sizeof(int) * memoria_config->page_size);
+    fread(page_swap, sizeof(int), memoria_config->page_size, swap);
+    log_trace(logger, "Leemos hasta %i", ftell(swap));
     log_info(logger, "SWAP IN -  PID: %i - Marco: %i - Page In: %i|%i", pcb->id, page_data->frame, segment, page);
+    fclose(swap);
     return page_swap;
 }
 
@@ -193,17 +202,15 @@ void write_page_to_swap(t_page_table_data* page_data, t_pcb* pcb, int segment, i
     swap = fopen(memoria_config->path_swap, "a");
     void* ram_page_start = ram + page_data->frame * memoria_config->page_size;
     fwrite(ram_page_start, sizeof(int), memoria_config->page_size, swap);
-    fclose(swap);
     page_data->swap_pos = ftell(swap);
     log_info(logger, "SWAP OUT -  PID: %i - Marco: %i - Page Out: %i|%i", pcb->id, page_data->frame, segment, page);
+    fclose(swap);
 }
 
 // Busca un frame libre, si no hay ninguno libre hace reemplazo
 int find_free_frame(t_pcb* pcb, int segment, int page)
 {
     int frame = -1;
-
-    log_trace(logger, "Hay %i frame en el bitarray", list_size(frames_usage));
 
     // Busca un frame libre
     for(int i = 0; i < list_size(frames_usage); i++)
@@ -220,6 +227,7 @@ int find_free_frame(t_pcb* pcb, int segment, int page)
     // No se encontro un frame libre, se hace reemplazo
     if(frame == -1)
     {
+        log_trace(logger, "No hay frames libres");
         // La memoria esta llena
         t_page_table_data* victim = find_victim(pcb, segment, page);
         
@@ -249,11 +257,11 @@ t_page_table_data* find_victim(t_pcb* pcb, int segment, int page)
 
             log_trace(logger, "Buscando en Segmento: %i", i);
 
-            for(int j = 0; j < list_size(page_tables); j++)
+            for(int j = 0; j < list_size(page_table); j++)
             {
-                t_page_table_data* page_data = list_get(page_tables, j);
+                t_page_table_data* page_data = list_get(page_table, j);
 
-                if(is_victim(page, o))
+                if(is_victim(page_data, o))
                 {
                     log_debug(logger, "Se encontro victima!");
                     log_info(logger, "REEMPLAZO - PID: %i - Marco: %i - Page Out: %i|%i - Page In: %i|%i", pcb->id, page_data->frame, i, j, segment, page);
@@ -270,6 +278,8 @@ bool is_victim(t_page_table_data* page, int iteration)
     {
         if(page->P == 0)
             return false;
+
+        log_trace(logger, "Chequeo Frame:%i|P:%i|U:%i|M:%i", page->frame, page->P, page->U, page->M);
 
         if(iteration % 2 == 0)
         {
@@ -294,6 +304,8 @@ bool is_victim(t_page_table_data* page, int iteration)
     {
         if(page->P == 0)
             return false;
+
+        log_trace(logger, "Chequeo Frame:%i|P:%i|U:%i|M:%i", page->frame, page->P, page->U, page->M);
 
         if(page->U == 0)
         {

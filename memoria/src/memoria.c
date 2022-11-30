@@ -39,6 +39,7 @@ t_memoria_config* memoria_config;
 int socket_cpu;
 int socket_cpu_tlb;
 int socket_kernel;
+int socket_kernel_page_fault;
 
 // Threads
 pthread_t thread_cpu;
@@ -96,6 +97,12 @@ void initialize_sockets()
 	log_trace(logger,"Esperando conexion con KERNEL desde MEMORIA");
 	socket_kernel = accept(socket_memoria_kernel, NULL, NULL);
 	log_trace(logger, "Conexion con kernel: %i", socket_kernel);
+
+	// Conexion de Servidor con Kernel
+	int socket_memoria_kernel_page_fault = start_server_module("MEMORIA_KERNEL_PAGE_FAULT");
+	log_trace(logger,"Esperando conexion con KERNEL PAGE FAULT desde MEMORIA");
+	socket_kernel_page_fault = accept(socket_memoria_kernel_page_fault, NULL, NULL);
+	log_trace(logger, "Conexion con kernel: %i", socket_kernel);
 }
 
 void initialize_config(char **argv)
@@ -132,7 +139,7 @@ void initialize_memory_structures()
 	ftruncate(memoria_config->path_swap, sizeof(int) * memoria_config->swap_size);
 	page_tables = list_create();
 
-	int frames_count = memoria_config->memory_size / memoria_config->page_size;
+	int frames_count = memoria_config->inputs_table;
 	frames_usage = list_create();
 
 	for(int i = 0; i < frames_count; i++)

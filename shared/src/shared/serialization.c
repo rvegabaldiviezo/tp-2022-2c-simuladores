@@ -489,10 +489,11 @@ t_list* recv_segment_table(int socket)
     return segments;
 }
 // resolved -> resuelto 
-void send_page_fault_resolved(int socket)
+void send_page_fault_resolved(int socket, t_pcb* pcb)
 {
     t_buffer* buffer = create_buffer();
     add_op_code(buffer, PAGE_FAULT_RESOLVED);
+    add_pcb(buffer, pcb);
     send_buffer(socket, buffer);
     destroy_buffer(buffer);
 }
@@ -540,27 +541,13 @@ uint32_t recv_reg(int socket){
 	return reg;
 }
 
-void send_memdata(int socket, int memory_size, int page_size)
+void send_memdata(int socket, int inputs_table, int page_size)
 {
     t_buffer* buffer = create_buffer();
-    add_to_buffer(buffer, &memory_size, sizeof(memory_size));
+    add_to_buffer(buffer, &inputs_table, sizeof(inputs_table));
     add_to_buffer(buffer, &page_size, sizeof(page_size));
     send_buffer(socket, buffer);
     destroy_buffer(buffer);
-}
-
-int recv_memory_size(int socket)
-{
-	int memory_size;
-	recv(socket, &memory_size, sizeof(memory_size), 0);
-	return memory_size;
-}
-
-int recv_page_size(int socket)
-{
-	int page_size;
-	recv(socket, &page_size, sizeof(page_size), 0);
-	return page_size;
 }
 
 void send_frame_request(int socket, t_pcb* pcb, int segment, int page)

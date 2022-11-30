@@ -30,6 +30,7 @@ extern int quantum_rr;
 extern int socket_cpu_interrupt;
 extern int socket_cpu_dispatch;
 extern int socket_memoria;
+extern int socket_memoria_page_fault;
 // Queues
 t_queue* new_queue;
 t_queue* ready_1_queue;
@@ -61,6 +62,10 @@ void initialize_scheduller()
     io_queues = dictionary_create();
     io_semaphores = dictionary_create();
     io_times = dictionary_create();
+
+    // Creo hilo para manejar page faults de la memoria
+    pthread_t tid;
+    pthread_create(&tid, NULL, handle_page_fault, NULL);
 
     char** config_devices = config_get_array_value(config, "DISPOSITIVOS_IO");
     char** config_devices_time = config_get_array_value(config, "TIEMPOS_IO");
@@ -220,15 +225,16 @@ void block_state(t_pcb* pcb, char* device, int arg)
 
 // Hilo para manejar un page fault
 void* handle_page_fault(void* arg)
-{
-    t_pf* pf = (t_pf*)arg;
-
-    // Envio request a la memoria para que resuelva el page fault
-    send_page_fault_resolve(socket_memoria, pf->pcb, pf->segment, pf->page);
-    // Esperamos la respuesta de memoria que se haya resuelto
-    recv_and_validate_op_code_is(socket_memoria, PAGE_FAULT_RESOLVED);
-    // Enviamos el proceso a READY
-    ready_state_from_page_fault(pf->pcb);
+{    
+    while(true)
+    {
+        // Esperamos que memoria envie un page fault resuelto
+        recv_and_validate_op_code_is(socket_memoria_page_fault, PAGE_FAULT_RESOLVED);
+        t_pcb* pcb = recv_pcb(socket_memoria_page_fault);
+        // Enviamos el proceso a READY
+        ready_state_from_page_fault(pcb);
+        log_debug(logger, "Se resolvio el PAGE FAULT de PID: %i", pcb->id);
+    }    
 }
 
 // TODO PANTALLA y TECLADO tienen que ejecutar sin encolarse
@@ -384,16 +390,14 @@ void wait_cpu_dispatch()
                     3.- Esperar la respuesta del módulo memoria.
                     4.- Al recibir la respuesta del módulo memoria, desbloquear el proceso y colocarlo en la cola de ready correspondiente.
                 */
-                t_pf* argument = (t_pf*)malloc(sizeof(t_pf));
-
-                argument->pcb = pcb;
-                argument->segment = recv_int(socket_cpu_dispatch);
-                argument->page = recv_int(socket_cpu_dispatch);
+                int segment = recv_int(socket_cpu_dispatch);
+                int page = recv_int(socket_cpu_dispatch);
 
                 log_info(logger, "PID: %i - Estado Anterior: EXECUTE - Estado Actual: BLOCKED", pcb->id);
-                log_info(logger, "Page Fault PID: %i - Segmento: %i - Pagina: %i", pcb->id, argument->segment, argument->page);
-                pthread_t tid; // no voy a usar el thread id asi que lo creo y muere
-                pthread_create(&tid, NULL, handle_page_fault, argument);
+                log_info(logger, "Page Fault PID: %i - Segmento: %i - Pagina: %i", pcb->id, segment, page);
+
+                // Envio request a la memoria para que resuelva el page fault
+                send_page_fault_resolve(socket_memoria, pcb, segment, page);
 
                 break;
             case SEGMENTATION_FAULT:

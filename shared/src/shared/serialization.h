@@ -58,16 +58,13 @@ void send_segmentation_fault(int socket);
 void send_teclado_response(int socket, int value);
 void send_pantalla_response(int socket);
 // Memoria -> CPU
-void send_memdata(int socket, int memory_size, int page_size);
+void send_memdata(int socket, int inputs_table, int page_size);
 void send_frame_response(int socket, int frame);
 void send_page_fault(int socket);
 void send_write_response(int socket);
 void send_read_response(int socket, int value);
 void send_tlb_consistency_check(int socket, int frame);
 int recv_tlb_consistency_check(int socket);
-// CPU -> Memoria
-int recv_memory_size(int socket);
-int recv_page_size(int socket);
 
 void send_frame_request(int socket, t_pcb* pcb, int segment, int page);
 void send_write_request(int socket, t_pcb* pcb, int frame, int offset, int value);
@@ -84,6 +81,6 @@ void send_page_fault_resolve(int socket, t_pcb* pcb, int segment, int page); // 
 // Memoria -> Kernel
 void send_segment_table(int socket, t_list* segments);
 t_list* recv_segment_table(int socket);
-void send_page_fault_resolved(int socket); // resolved -> resuelto 
+void send_page_fault_resolved(int socket, t_pcb* pcb); // resolved -> resuelto 
 
 #endif

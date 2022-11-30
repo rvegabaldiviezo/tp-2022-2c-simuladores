@@ -35,10 +35,11 @@ do
 
   if [ $MODULO = "consola" ]; then
     terminator --geometry 960 --title "$MODULO program$PROGRAM_NUMBER"  -e "./run $MODULO $CONFIG $PROGRAM_NUMBER; bash" &
+    sleep 0.2s
   else
     terminator --geometry 960 --title $MODULO  -e "./run $MODULO $CONFIG $PROGRAM_NUMBER; bash" &
+    sleep 1s
   fi
-  sleep 0.5s
 
 done
 
