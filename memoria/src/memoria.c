@@ -139,7 +139,7 @@ void initialize_memory_structures()
 	ftruncate(memoria_config->path_swap, sizeof(int) * memoria_config->swap_size);
 	page_tables = list_create();
 
-	int frames_count = memoria_config->inputs_table;
+	int frames_count = memoria_config->frames_per_process;
 	frames_usage = list_create();
 
 	for(int i = 0; i < frames_count; i++)

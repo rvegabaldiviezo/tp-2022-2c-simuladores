@@ -72,6 +72,10 @@
 ```bash
 ./multirun memoria memoria_modulos cpu memoria_modulos kernel memoria_modulos consola memoria_consola1 consola memoria_consola2 consola memoria_consola3
 ```
+#### Prueba TLB
+```bash
+./multirun memoria tlb_1 cpu tlb_1 kernel tlb_1 consola tlb_1 1 consola tlb_2 2
+```
 ## TESTING
 #### Para probar muchos modulos a la vez (config es opcional)
 ```bash

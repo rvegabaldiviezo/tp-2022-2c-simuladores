@@ -47,6 +47,8 @@ void mmu (int dl, int* segment_max_size, int* segment_num, int* segment_offset, 
 
 void tlb_access(t_pcb* pcb, int segment_num, int page_num, int frame, int page_offset, uint32_t reg1, int in_out);
 
+void replace_tlb_input(int pid, int segment_num, int page_num, int frame);
+
 void add_to_tlb(int pid, int segment_num, int page_num, int frame);
 
 void request_data_in(int frame, int page_offset, t_pcb* pcb, t_register reg1);

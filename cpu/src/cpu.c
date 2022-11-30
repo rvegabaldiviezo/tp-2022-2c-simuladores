@@ -270,7 +270,9 @@ void mov_execute(t_pcb* pcb, t_register reg1, uint32_t dl, int in_out){
 	}
 	else{
 		// Bloqueo
+		log_trace(logger, "Chequeo Lock");
 		pthread_mutex_lock(&sem_mutex_tlb);
+		log_trace(logger, "No estoy bloqueado");
 		//Check TLB
 		int frame = check_tlb(pcb->id, segment_num, page_num);
 		//1 o 2 accesos
@@ -307,9 +309,9 @@ void mov_execute(t_pcb* pcb, t_register reg1, uint32_t dl, int in_out){
 			else if (op_code == PAGE_FAULT){
 				pf_occurred(pcb->id, segment_num, page_num);
 			}
-			// Desbloqueo
-			pthread_mutex_unlock(&sem_mutex_tlb);
 		}
+		// Desbloqueo
+		pthread_mutex_unlock(&sem_mutex_tlb);
 	}
 	log_tlb(logger, tlb);
 }
@@ -372,6 +374,7 @@ void add_to_tlb(int pid, int segment_num, int page_num, int frame){
 	new_tlb->time = timestamp;
 	timestamp++;
 	list_add(tlb, new_tlb);
+	log_trace(logger, "Nuevo Tamaño TLB: %i", list_size(tlb));
 }
 
 
@@ -388,6 +391,7 @@ void replace_tlb_input(int pid, int segment_num, int page_num, int frame){
 			index_replace = i;
 		}	// Se recorre la lista guardando siempre el menor time
 	}		// al final, el index_replace marca el de menor time
+	log_trace(logger, "index_replace: %i", index_replace);
 	aux_tlb = list_get(tlb, index_replace);// reemplazo segun el index anterior
 	aux_tlb->pid = pid;
 	aux_tlb->segment = segment_num;
@@ -430,7 +434,9 @@ void* consistency_check(void* arg) {
 	while(true){
 		frame_swapped = recv_tlb_consistency_check(socket_memoria_tlb);
 		// Bloqueo
+		log_trace(logger, "Voy a bloquear");
 		pthread_mutex_lock(&sem_mutex_tlb);
+		log_trace(logger, "Bloquie");
 		for(int i = list_size(tlb) - 1; i >= 0; i--){
 			t_tlb* delete_tlb = list_get(tlb,i);
 			if(delete_tlb->frame == frame_swapped){
