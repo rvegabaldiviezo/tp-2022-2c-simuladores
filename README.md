@@ -50,31 +50,150 @@
 ```bash
 ./buildall
 ```
-#### Luego ejecutar los modulos
+## PRUEBAS
+### Prueba Base
 ```bash
-./run [modulo] [config]
+./run memoria base
 ```
-### ACORDARSE DE AGREGAR TECLADO Y PANTALLA COMO DISPOSITIVOS, ADEMAS ASIGNARLES UN TIEMPO (0 ESTA BIEN)
-## Pruebas
-#### Prueba Base
+```bash
+./run cpu base
+```
+```bash
+./run kernel base
+```
+```bash
+./run consola base 1 
+```
+```bash
+./run consola base 2
+```
+```bash
+./run consola base 3
+```
 ```bash
 ./multirun memoria base cpu base kernel base consola base 1 consola base 2 consola base 3
 ```
-#### Prueba Planificacion Base
+### Prueba Planificacion Base
+```bash
+./run memoria planificacion_base
+```
+```bash
+./run cpu planificacion_base
+```
+```bash
+./run kernel planificacion_base
+```
+```bash
+./run consola planificacion_base 1 
+```
+```bash
+./run consola planificacion_base 2 
+```
+```bash
+./run consola planificacion_base 3
+```
+```bash
+./run consola planificacion_base 4 
+```
 ```bash
 ./multirun memoria planificacion_base cpu planificacion_base kernel planificacion_base consola planificacion_base 1 consola planificacion_base 2 consola planificacion_base 3 consola planificacion_base 4
 ```
-#### Prueba Planificacion Full
+### Prueba Planificacion Full
+```bash
+./run memoria planificacion_full
+```
+```bash
+./run cpu planificacion_full
+```
+```bash
+./run kernel planificacion_full
+```
+```bash
+./run consola planificacion_full 1 
+```
+```bash
+./run consola planificacion_full 2 
+```
+```bash
+./run consola planificacion_full 1
+```
+```bash
+./run consola planificacion_full 2 
+```
 ```bash
 ./multirun memoria planificacion_full cpu planificacion_full kernel planificacion_full consola planificacion_full 1 consola planificacion_full 1 consola planificacion_full 2 consola planificacion_full 2
 ```
-#### Prueba Memoria
+### Prueba Memoria
+```bash
+./run memoria memoria_modulos
+```
+```bash
+./run cpu memoria_modulos
+```
+```bash
+./run kernel memoria_modulos
+```
+```bash
+./run consola memoria_consola1
+```
+```bash
+./run consola memoria_consola2
+```
+```bash
+./run consola memoria_consola3
+```
 ```bash
 ./multirun memoria memoria_modulos cpu memoria_modulos kernel memoria_modulos consola memoria_consola1 consola memoria_consola2 consola memoria_consola3
 ```
-#### Prueba TLB
+### Prueba TLB
+```bash
+./run memoria tlb_1
+```
+```bash
+./run cpu tlb_1
+```
+```bash
+./run kernel tlb_1
+```
+```bash
+./run consola tlb_1 1
+```
+```bash
+./run consola tlb_2 2
+```
 ```bash
 ./multirun memoria tlb_1 cpu tlb_1 kernel tlb_1 consola tlb_1 1 consola tlb_2 2
+```
+### Prueba Estabilidad General
+```bash
+./run memoria estabilidad_general
+```
+```bash
+./run cpu estabilidad_general
+```
+```bash
+./run kernel estabilidad_general
+```
+```bash
+./run consola estabilidad_consola_1 1
+```
+```bash
+./run consola estabilidad_consola_2 2
+```
+```bash
+./run consola estabilidad_consola_3 3
+```
+```bash
+./run consola estabilidad_consola_4 4
+```
+```bash
+./run consola estabilidad_consola_5 5
+```
+```bash
+./run consola estabilidad_consola_6 6
+```
+```bash
+./multirun memoria estabilidad_general cpu estabilidad_general kernel estabilidad_general consola estabilidad_consola_1 1 consola estabilidad_consola_2 2 consola estabilidad_consola_3 3 consola estabilidad_consola_4 4 consola estabilidad_consola_5 5 consola estabilidad_consola_6 6
 ```
 ## TESTING
 #### Para probar muchos modulos a la vez (config es opcional)
