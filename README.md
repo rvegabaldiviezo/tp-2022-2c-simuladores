@@ -57,6 +57,10 @@
 ./ipconfig kernel 127.0.0.1
 ./ipconfig consola 127.0.0.1
 ```
+La IP de cada computadora la obtenemos con
+```bash
+ifconfig | grep "inet "
+```
 ## PRUEBAS
 ### Prueba Base
 ```bash
