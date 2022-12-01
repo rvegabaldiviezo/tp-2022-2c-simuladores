@@ -1,0 +1,22 @@
+#!/usr/bin/sudo bash
+MODULO=$1
+IP=$2
+
+case "$MODULO" in
+  ("memoria")
+    sed -i "s/^MEMORIA_CPU_IP=.*$/MEMORIA_CPU_IP=$IP/" config/ip.config
+    sed -i "s/^MEMORIA_CPU_TLB_IP=.*$/MEMORIA_CPU_TLB_IP=$IP/" config/ip.config
+    sed -i "s/^MEMORIA_KERNEL_IP=.*$/MEMORIA_KERNEL_IP=$IP/" config/ip.config
+    sed -i "s/^MEMORIA_KERNEL_PAGE_FAULT_IP=.*$/MEMORIA_KERNEL_PAGE_FAULT_IP=$IP/" config/ip.config
+    ;;
+  ("cpu")
+    sed -i "s/^CPU_DISPATCH_IP=.*$/CPU_DISPATCH_IP=$IP/" config/ip.config
+    sed -i "s/^CPU_INTERRUPT_IP=.*$/CPU_INTERRUPT_IP=$IP/" config/ip.config
+    ;;
+  ("kernel")
+    sed -i "s/^KERNEL_IP=.*$/KERNEL_IP=$IP/" config/ip.config
+    ;;
+  ("consola")
+    sed -i "s/^CONSOLA_IP=.*$/CONSOLA_IP=$IP/" config/ip.config
+    ;;
+esac

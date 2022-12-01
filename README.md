@@ -50,6 +50,13 @@
 ```bash
 ./buildall
 ```
+#### Tercero setear la IP de cada modulo
+```bash
+./ipconfig memoria 127.0.0.1
+./ipconfig cpu 127.0.0.1
+./ipconfig kernel 127.0.0.1
+./ipconfig consola 127.0.0.1
+```
 ## PRUEBAS
 ### Prueba Base
 ```bash
