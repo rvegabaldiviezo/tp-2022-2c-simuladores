@@ -107,7 +107,9 @@ void frame_access()
 	int page = recv_int(socket_cpu);
 
 	t_segment* segment_data = list_get(pcb->segment_table, segment);
+	// lista de tabla de paginas
 	t_list* page_table = list_get(page_tables, segment_data->page_table_index);
+	// tabla de paginas 
 	t_page_table_data* page_data = list_get(page_table, page);
 
 	usleep(memoria_config->memory_delay * 1000);

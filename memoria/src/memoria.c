@@ -162,11 +162,12 @@ t_page_table_data* get_page(t_pcb* pcb, int segment, int page)
 // parametros pasados por cpu para encontrar la pagina a travez del frame
 t_page_table_data* get_page_reverse(t_pcb* pcb, int frame)
 {
+	// hacemos un for para buscar los segmentos 
 	for(int segment = 0; segment < list_size(pcb->segment_table); segment++)
 	{
 		t_segment* segment_data = list_get(pcb->segment_table, segment);
 		t_list* page_table = list_get(page_tables, segment_data->page_table_index);
-
+		// hacemos otro for para buscar en la tabla de paginas
 		for(int page = 0; page < list_size(page_table); page++)
 		{
 			t_page_table_data* page_data = list_get(page_table, page);

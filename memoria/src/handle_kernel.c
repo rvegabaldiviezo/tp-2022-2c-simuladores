@@ -53,6 +53,7 @@ void handle_kernel()
     }
 }
 
+// Creacion de tabla de paginas
 void process_started()
 {
 	int pid = recv_int(socket_kernel);
@@ -139,6 +140,7 @@ void process_finished()
     log_debug(logger, "Se liberaron las paginas de PID: %i", pcb->id);
 }
 
+// analizamos si la tabla esta o no esta presente 
 void resolve_page_fault()
 {
 	t_pcb* pcb = recv_pcb(socket_kernel);
@@ -160,6 +162,7 @@ void resolve_page_fault()
         frame = find_free_frame(pcb, segment, page);
 
         page_data->frame = frame;
+        // Presencia en memoria Ram
         page_data->P = 1;
     }
     else
@@ -310,6 +313,7 @@ bool is_victim(t_page_table_data* page, int iteration)
         }
     }
     else
+    // CLOCK NORMAL
     {
         if(page->P == 0)
             return false;
