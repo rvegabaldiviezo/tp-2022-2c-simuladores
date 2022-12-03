@@ -626,5 +626,29 @@ int recv_tlb_consistency_check(int socket)
     return recv_int(socket);
 }
 
+void free_pcb(t_pcb* pcb)
+{
+    list_destroy_and_destroy_elements(pcb->instructions, free_instruction);
+    list_destroy_and_destroy_elements(pcb->segment_table, free_segment);
+    free(pcb);
+}
 
+void free_instruction(t_instruction* instruction)
+{
+    list_destroy_and_destroy_elements(instruction->parameters, free_parameter);
+    free(instruction);
+}
+
+void free_segment(t_segment* segment)
+{
+    free(segment);
+}
+
+void free_parameter(t_parameter* parameter)
+{
+    if(parameter->is_string) {
+        free(parameter->parameter);
+    }
+    free(parameter);
+}
 

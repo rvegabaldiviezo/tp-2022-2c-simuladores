@@ -26,10 +26,6 @@
 t_log* logger;
 t_config* consola_config;
 
-void destroy_instruction(void* instruction) {
-	list_destroy(((t_instruction*)instruction)->parameters);
-}
-
 t_list* get_segments_from_config()
 {
 	char** segments_temp = config_get_array_value(consola_config, "SEGMENTOS");
@@ -122,7 +118,8 @@ int main(int argc, char **argv) {
 	exit_cycle: ;
 
 	// Hay que liberar la memoria_config de lo que se reservo
-	list_destroy_and_destroy_elements(instructions, &destroy_instruction);
+	list_destroy_and_destroy_elements(instructions, free_instruction);
+	list_destroy(segments);
 	log_destroy(logger);
 	config_destroy(consola_config);
 

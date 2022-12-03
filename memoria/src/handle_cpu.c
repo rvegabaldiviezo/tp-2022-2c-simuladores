@@ -75,6 +75,7 @@ void ram_access_read()
 	log_debug(logger, "Lectura: %i", value);
 
 	send_read_response(socket_cpu, value);
+	free_pcb(pcb);
 }
 void ram_access_write()
 {
@@ -99,6 +100,7 @@ void ram_access_write()
 	log_debug(logger, "Escritura: %i", value);
 
 	send_write_response(socket_cpu);
+	free_pcb(pcb);
 }
 void frame_access()
 {
@@ -125,4 +127,5 @@ void frame_access()
 		log_debug(logger, "Page Fault, PID: %i - Página: %i", pcb->id, page);
 		send_page_fault(socket_cpu);
 	}
+	free_pcb(pcb);
 }

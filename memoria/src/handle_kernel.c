@@ -102,6 +102,8 @@ void process_started()
     }
 
     send_segment_table(socket_kernel, segment_table);
+    list_destroy(segments_sizes);
+    list_destroy(segment_table);
 }
 //void send_process_finished(int socket, int pid, t_list* segments);
 void process_finished()
@@ -138,6 +140,7 @@ void process_finished()
 
     send_process_finished_response(socket_kernel);
     log_debug(logger, "Se liberaron las paginas de PID: %i", pcb->id);
+    free_pcb(pcb);
 }
 
 // analizamos si la tabla esta o no esta presente 
@@ -182,12 +185,14 @@ void resolve_page_fault()
         pthread_mutex_lock(&ram_mutex);
         void* dest_ram = ram + memoria_config->page_size * frame;
         memcpy(dest_ram, swap_data, memoria_config->page_size * sizeof(int));
+        free(swap_data);
         pthread_mutex_unlock(&ram_mutex);
     }
 
     send_tlb_consistency_check(socket_cpu_tlb, frame);
     send_page_fault_resolved(socket_kernel_page_fault, pcb);
     log_debug(logger, "Page Fault resuelto PID: %i | Segment: %i | Page: %i | Frame: %i", pcb->id, segment, page, frame);
+    free_pcb(pcb);
 }
 
 int* read_page_from_swap(t_page_table_data* page_data, t_pcb* pcb, int segment, int page)

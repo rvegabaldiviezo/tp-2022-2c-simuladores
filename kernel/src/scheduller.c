@@ -252,6 +252,7 @@ void* handle_pantalla(void* arg)
     log_debug(logger, "PID: %i - Recibi de consola N°%i confirmacion que se mostro el %i por PANTALLA", pcb->id, pcb->socket_consola, pcb->registers[reg]);
     // Desbloqueamos el proceso
     ready_state_from_io(io_data->pcb);
+    free(io_data);
 }
 
 void* handle_teclado(void* arg)
@@ -272,6 +273,7 @@ void* handle_teclado(void* arg)
     pcb->registers[reg] = value;
     // Desbloqueamos el proceso
     ready_state_from_io(io_data->pcb);
+    free(io_data);
 }
 
 void* handle_io(void* arg)
@@ -290,6 +292,7 @@ void* handle_io(void* arg)
         // Se termino de resolver el IO
         // Desbloqueamos el proceso
         ready_state_from_io(io_data->pcb);
+        free(io_data);
     }
 }
 
@@ -338,6 +341,7 @@ void execute_algorithm()
     }
 
     send_pcb(socket_cpu_dispatch, pcb);
+    free_pcb(pcb);
     // Empezamos el thread de quantum
     if(use_quantum) {
 	    pthread_create(&thread_interrupt, NULL, start_quantum, NULL); // thread interrupt
@@ -368,6 +372,7 @@ void wait_cpu_dispatch()
                 // avisamos a la consola de que se finalizo el proceso
                 send_exit(pcb->socket_consola);
                 log_info(logger, "PID: %i - Estado Anterior: EXECUTE - Estado Actual: EXIT", pcb->id);
+                free_pcb(pcb);
                 break;
             case INT_QUANTUM:
                 // metemos el pcb en la cola de ready
@@ -398,13 +403,13 @@ void wait_cpu_dispatch()
 
                 // Envio request a la memoria para que resuelva el page fault
                 send_page_fault_resolve(socket_memoria, pcb, segment, page);
-
+                free_pcb(pcb);
                 break;
             case SEGMENTATION_FAULT:
                 // Ocurrio un segfault
                 log_debug(logger, "Ocurrio un SEGMENTATION_FAULT");
                 send_segmentation_fault(pcb->socket_consola);
-
+                free_pcb(pcb);
             default:
                 break;
         }

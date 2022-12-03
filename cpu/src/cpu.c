@@ -205,6 +205,7 @@ void instruction_cycle(){
 		log_pcb(logger, pcb);
 		log_tlb(logger, tlb);
 		log_trace(logger, "PCB ENVIADO - A la espera de otro proceso");
+		free_pcb(pcb);
 	}
 }
 

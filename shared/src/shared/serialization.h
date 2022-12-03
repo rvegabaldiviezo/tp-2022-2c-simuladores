@@ -83,4 +83,13 @@ void send_segment_table(int socket, t_list* segments);
 t_list* recv_segment_table(int socket);
 void send_page_fault_resolved(int socket, t_pcb* pcb); // resolved -> resuelto 
 
+// Libera la memoria del PCB
+void free_pcb(t_pcb* pcb);
+// Libera la memoria de una instruccion
+void free_instruction(t_instruction* instruction);
+// Libera la memoria de un segmento
+void free_segment(t_segment* segment);
+// Libera la memoria de un parametro
+void free_parameter(t_parameter* parameter);
+
 #endif
