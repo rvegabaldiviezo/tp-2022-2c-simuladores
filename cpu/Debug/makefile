@@ -42,7 +42,7 @@ main-build: cpu
 cpu: $(OBJS) $(USER_OBJS) makefile objects.mk $(OPTIONAL_TOOL_DEPS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C Linker'
-	gcc  -o "cpu" $(OBJS) $(USER_OBJS) $(LIBS)
+	gcc  -o "cpu" $(OBJS) $(USER_OBJS) $(LIBS) -pthread -lshared -lcommons
 	@echo 'Finished building target: $@'
 	@echo ' '
 
