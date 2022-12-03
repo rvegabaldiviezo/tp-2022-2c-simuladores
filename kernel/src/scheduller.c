@@ -378,7 +378,7 @@ void wait_cpu_dispatch()
                 // metemos el pcb en la cola de ready
                 ready_state_from_quantum(pcb);
                 break;
-            case INT_IO:
+            case INT_IO: ;
                 // obtenemos el dispositivo y registro o unidad de trabajo que tambien envio la cpu
                 char* device = recv_string(socket_cpu_dispatch);
                 int arg = recv_int(socket_cpu_dispatch);
@@ -387,7 +387,7 @@ void wait_cpu_dispatch()
                 // resolver la solicitud de i/o uno de los hilos
                 block_state(pcb, device, arg);
                 break;
-            case INT_PAGE_FAULT:
+            case INT_PAGE_FAULT: ;
                 // Resolvemos el pagefault de la siguiente manera
                 /** 
                     1.- Mover al proceso al estado Bloqueado. Este estado bloqueado será independiente de todos los demás ya que solo afecta al proceso y no compromete recursos compartidos.
