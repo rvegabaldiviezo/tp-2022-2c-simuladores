@@ -42,6 +42,26 @@
 | Gran Ejemplo de Creación de Kernels | [GECK](https://docs.google.com/document/d/1xYmkJXRRddM51fQZfxr3CEuhNtFCWe5YU7hhvsUnTtg/edit)|
 
 ## DEPLOY
+#### Obtener la IP de la computadora
+```bash
+ifconfig | grep "inet "
+```
+#### Usar el comando
+```bash
+ssh utnso@<inet addr>
+```
+#### Obtener el Personal Access Token
+```bash
+curl -k https://tp.conlatoso.com/pat.txt
+```
+#### Clonar el repositorio (Username: LautaroRobles, Password: (Usar el personal access token del paso anterior))
+```bash
+git clone https://github.com/sisoputnfrba/tp-2022-2c-simuladores.git
+```
+#### Entrar al repo
+```bash
+cd tp-2022-2c-simuladores/
+```
 #### Primero instalar las commons ejecutando
 ```bash
 ./commons
@@ -56,10 +76,6 @@
 ./ipconfig cpu 127.0.0.1
 ./ipconfig kernel 127.0.0.1
 ./ipconfig consola 127.0.0.1
-```
-La IP de cada computadora la obtenemos con
-```bash
-ifconfig | grep "inet "
 ```
 ## PRUEBAS
 ### Prueba Base
