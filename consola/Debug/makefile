@@ -29,7 +29,7 @@ all: consola
 consola: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C Linker'
-	gcc  -o "consola" $(OBJS) $(USER_OBJS) $(LIBS) -pthread -lshared -lcommons
+	gcc  -o "consola" $(OBJS) $(USER_OBJS) $(LIBS) -pthread -lshared -lcommons -lm
 	@echo 'Finished building target: $@'
 	@echo ' '
 
