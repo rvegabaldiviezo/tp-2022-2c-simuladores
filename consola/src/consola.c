@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
 
 		switch (op)
 		{
-		case TECLADO:
+		case TECLADO: ;
 			// Espero un input por el teclado
 			char input[256];
 			do {
@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
 			send_teclado_response(socket_kernel, teclado);
 			break;
 		
-		case PANTALLA: 
+		case PANTALLA: ;
 			// Recibo el valor a imprimir por pantalla
 			int pantalla = recv_int(socket_kernel);
 			printf("Resultado: %i\n", pantalla);
@@ -103,12 +103,12 @@ int main(int argc, char **argv) {
 			send_pantalla_response(socket_kernel);
 			break;
 
-		case SEG_FAULT:
+		case SEG_FAULT: ;
 			printf("Error: Segmentation Fault (SIGSEGV)\n");
 			goto exit_cycle;
 			break;
 
-		case PROCESS_FINISHED:
+		case PROCESS_FINISHED: ;
 		default:
 			log_trace(logger, "Fianlizo la ejecucion de consola...");
 			goto exit_cycle;
