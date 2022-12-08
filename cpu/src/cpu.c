@@ -429,6 +429,7 @@ void pf_occurred(int pid, int segment_num, int page_num){
 
 
 void* consistency_check(void* arg) {
+	sleep(1);
 	// FUNCION PARA THREAD
 	socket_memoria_tlb = start_client_module("MEMORIA_CPU_TLB");
 	int frame_swapped;

@@ -1,4 +1,4 @@
-#!/usr/bin/sudo bash
+#!/usr/bin/bash
 
 CONFIG="default"
 PROGRAM_NUMBER="1"
@@ -8,7 +8,7 @@ CYAN='\033[0;36m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-killall terminator
+sudo killall terminator
 
 ./buildall
 
@@ -34,11 +34,11 @@ do
   echo -e "Abirendo terminal para $CYAN$MODULO$NC con config $CYAN$CONFIG$NC y$CYAN program$PROGRAM_NUMBER.txt$NC"
 
   if [ $MODULO = "consola" ]; then
-    terminator --geometry 960 --title "$MODULO program$PROGRAM_NUMBER"  -e "./run $MODULO $CONFIG $PROGRAM_NUMBER; bash" &
+    sudo terminator --geometry 960 --title "$MODULO program$PROGRAM_NUMBER" -e "./run $MODULO $CONFIG $PROGRAM_NUMBER; bash" &
     sleep 0.2s
   else
-    terminator --geometry 960 --title $MODULO  -e "./run $MODULO $CONFIG $PROGRAM_NUMBER; bash" &
-    sleep 1s
+    sudo terminator --geometry 960 --title $MODULO -e "./run $MODULO $CONFIG $PROGRAM_NUMBER; bash" &
+    sleep 2s
   fi
 
 done

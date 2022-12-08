@@ -7,8 +7,8 @@ declare -a arr=("memoria" "cpu" "kernel" "consola")
 ## now loop through the above array
 for i in "${arr[@]}"
 do
-   echo "$i"
-   ./build $i
+    ./build $i
+    rm -rf "$i/Debug/$i.log"
     if [ $? -ne 0 ]; then
         exit 1
     fi

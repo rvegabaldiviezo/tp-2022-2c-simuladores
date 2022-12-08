@@ -1,4 +1,4 @@
-#!/usr/bin/sudo bash
+#!/usr/bin/bash
 
 MODULO=$1
 DEFAULT_CONFIG="default"
