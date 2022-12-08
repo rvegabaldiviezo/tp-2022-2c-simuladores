@@ -1,5 +1,3 @@
-#!/usr/bin/bash
-
 CONFIG="default"
 PROGRAM_NUMBER="1"
 MODULO=""

@@ -1,5 +1,3 @@
-#!/usr/bin/bash
-
 MODULO=$1
 DEFAULT_CONFIG="default"
 DEFAULT_PROGRAM="1"
