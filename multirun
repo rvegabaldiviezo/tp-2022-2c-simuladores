@@ -34,10 +34,10 @@ do
   echo -e "Abirendo terminal para $CYAN$MODULO$NC con config $CYAN$CONFIG$NC y$CYAN program$PROGRAM_NUMBER.txt$NC"
 
   if [ $MODULO = "consola" ]; then
-    sudo terminator --geometry 960 --title "$MODULO program$PROGRAM_NUMBER" -e "./run $MODULO $CONFIG $PROGRAM_NUMBER; bash" &
+    terminator --geometry 960 --title "$MODULO program$PROGRAM_NUMBER" -e "./run $MODULO $CONFIG $PROGRAM_NUMBER; bash" &
     sleep 0.2s
   else
-    sudo terminator --geometry 960 --title $MODULO -e "./run $MODULO $CONFIG $PROGRAM_NUMBER; bash" &
+    terminator --geometry 960 --title $MODULO -e "./run $MODULO $CONFIG $PROGRAM_NUMBER; bash" &
     sleep 2s
   fi
 

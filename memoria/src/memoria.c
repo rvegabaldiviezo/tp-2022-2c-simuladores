@@ -102,7 +102,8 @@ void initialize_sockets()
 	int socket_memoria_kernel_page_fault = start_server_module("MEMORIA_KERNEL_PAGE_FAULT");
 	log_trace(logger,"Esperando conexion con KERNEL PAGE FAULT desde MEMORIA");
 	socket_kernel_page_fault = accept(socket_memoria_kernel_page_fault, NULL, NULL);
-	log_trace(logger, "Conexion con kernel: %i", socket_kernel);
+	log_trace(logger, "Conexion con kernel: %i", socket_kernel_page_fault);
+	log_trace(logger, "Se inicializaron los sockets de la memoria correctamente");
 }
 
 void initialize_config(char **argv)
@@ -129,14 +130,18 @@ void initialize_config(char **argv)
 	memoria_config->swap_delay = config_get_int_value(config, "RETARDO_SWAP");
 	memoria_config->path_swap = config_get_string_value(config, "PATH_SWAP");
 	memoria_config->swap_size = config_get_int_value(config, "TAMANIO_SWAP");
+	log_trace(logger, "Se inicializo la config de la memoria correctamente");
 }
 
 void initialize_memory_structures()
 {
 	ram = malloc(sizeof(int) * memoria_config->memory_size);
+	log_trace(logger, "Se inicializo la ram");
 	swap = fopen(memoria_config->path_swap, "w+");
 	fclose(swap);
+	log_trace(logger, "Se inicializo archivo swap");
 	ftruncate(memoria_config->path_swap, sizeof(int) * memoria_config->swap_size);
+	log_trace(logger, "Se modifico el tamaño del archivo swap");
 	page_tables = list_create();
 
 	int frames_count = memoria_config->frames_per_process;
@@ -149,6 +154,7 @@ void initialize_memory_structures()
 
 	log_trace(logger, "Cantidad de frames: %i", list_size(frames_usage));
 	pthread_mutex_init(&ram_mutex, NULL);
+	log_trace(logger, "Se inicializaron las estructuras de la memoria correctamente");
 }
 
 t_page_table_data* get_page(t_pcb* pcb, int segment, int page)

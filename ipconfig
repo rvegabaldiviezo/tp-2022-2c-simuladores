@@ -16,7 +16,11 @@ case "$MODULO" in
   ("kernel")
     sed -i "s/^KERNEL_IP=.*$/KERNEL_IP=$IP/" config/ip.config
     ;;
-  ("consola")
-    sed -i "s/^CONSOLA_IP=.*$/CONSOLA_IP=$IP/" config/ip.config
+  *)
+    echo "No se encuentra el modulo $MODULO."
+    echo "Las opciones son: "
+    echo "memoria"
+    echo "cpu"
+    echo "kernel"
     ;;
 esac

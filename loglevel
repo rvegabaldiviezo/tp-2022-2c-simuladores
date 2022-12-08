@@ -1,0 +1,7 @@
+#!/usr/bin/sudo bash
+LEVEL=$1
+
+sed -i "s/LOG_LEVEL_.*/LOG_LEVEL_$LEVEL);/g" kernel/src/kernel.c
+sed -i "s/LOG_LEVEL_.*/LOG_LEVEL_$LEVEL);/g" memoria/src/memoria.c
+sed -i "s/LOG_LEVEL_.*/LOG_LEVEL_$LEVEL);/g" cpu/src/cpu.c
+sed -i "s/LOG_LEVEL_.*/LOG_LEVEL_$LEVEL);/g" consola/src/consola.c
