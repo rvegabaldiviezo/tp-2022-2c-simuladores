@@ -6,11 +6,11 @@ case "$MODULO" in
   ("memoria_cpu")
     sed -i "s/^MEMORIA_CPU_PUERTO=.*$/MEMORIA_CPU_PUERTO=$PUERTO/" config/ip.config
     ;;
-  ("memoria_kernel")
-    sed -i "s/^MEMORIA_KERNEL_PUERTO=.*$/MEMORIA_KERNEL_PUERTO=$PUERTO/" config/ip.config
-    ;;
   ("memoria_cpu_tlb")
     sed -i "s/^MEMORIA_CPU_TLB_PUERTO=.*$/MEMORIA_CPU_TLB_PUERTO=$PUERTO/" config/ip.config
+    ;;
+  ("memoria_kernel")
+    sed -i "s/^MEMORIA_KERNEL_PUERTO=.*$/MEMORIA_KERNEL_PUERTO=$PUERTO/" config/ip.config
     ;;
   ("memoria_kernel_page_fault")
     sed -i "s/^MEMORIA_KERNEL_PAGE_FAULT_PUERTO=.*$/MEMORIA_KERNEL_PAGE_FAULT_PUERTO=$PUERTO/" config/ip.config
@@ -28,8 +28,8 @@ case "$MODULO" in
     echo "No se encuentra el modulo $MODULO."
     echo "Las opciones son: "
     echo "memoria_cpu"
-    echo "memoria_kernel"
     echo "memoria_cpu_tlb"
+    echo "memoria_kernel"
     echo "memoria_kernel_page_fault"
     echo "cpu_dispatch"
     echo "cpu_interrupt"

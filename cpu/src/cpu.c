@@ -78,6 +78,8 @@ void connections(){
 
 	socket_memoria = start_client_module("MEMORIA_CPU");	  // CONECTAR A MEMORIA
 
+	socket_memoria_tlb = start_client_module("MEMORIA_CPU_TLB"); // CONECTAR A MEMORIA TLB
+
 	pthread_create(&thread_interrupt, NULL, start_interrupt, NULL); // CONECTAR A KERNEL INTERRUPT (THREAD)
 
 	pthread_create(&thread_tlb_consistency, NULL, consistency_check, NULL); // CONECTAR A MEMORIA TLB (para eliminar inconsistencia)
@@ -429,9 +431,7 @@ void pf_occurred(int pid, int segment_num, int page_num){
 
 
 void* consistency_check(void* arg) {
-	sleep(1);
 	// FUNCION PARA THREAD
-	socket_memoria_tlb = start_client_module("MEMORIA_CPU_TLB");
 	int frame_swapped;
 	while(true){
 		frame_swapped = recv_tlb_consistency_check(socket_memoria_tlb);
