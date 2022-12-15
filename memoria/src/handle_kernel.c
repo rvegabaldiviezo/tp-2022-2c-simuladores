@@ -38,6 +38,7 @@ void handle_kernel()
 {
     while(true) 
     {
+        recv_buffer_size(socket_kernel);
         op_code op_code = recv_op_code(socket_kernel);
 
         switch (op_code)

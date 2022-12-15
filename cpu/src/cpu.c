@@ -42,7 +42,7 @@ void setup (char **argv){
 
 	// Logger
 
-	logger = log_create("cpu.log", "CPU", true, LOG_LEVEL_TRACE);
+	logger = log_create("cpu.log", "CPU", true, LOG_LEVEL_INFO);
 
 	// Creo config
 
@@ -89,6 +89,7 @@ void connections(){
 	socket_kernel_dispatch = accept(socket_cpu_dispatch, NULL, NULL);
 	log_trace(logger, "Conexion con kernel dispatch: %i", socket_kernel_dispatch);
 
+	recv_buffer_size(socket_memoria);
 	inputs_table_memory = recv_int(socket_memoria);
 	page_size = recv_int(socket_memoria);
 
@@ -105,6 +106,7 @@ void instruction_cycle(){
 
 	while(true){
 
+    	recv_buffer_size(socket_kernel_dispatch);
 		t_pcb* pcb = recv_pcb(socket_kernel_dispatch);
 		interruption_quantum = NO_INTERRUPT;
 		pcb->interrupt_type = NO_INTERRUPT;
@@ -287,6 +289,7 @@ void mov_execute(t_pcb* pcb, t_register reg1, uint32_t dl, int in_out){
 			log_info(logger, "PID: %i - TLB MISS - Segmento: %i - Pagina: %i", pcb->id, segment_num, page_num);
 			// no esta el frame, hay que pedirlo
 			send_frame_request(socket_memoria, pcb, segment_num, page_num);
+			recv_buffer_size(socket_memoria);
 			op_code op_code = recv_op_code(socket_memoria);
 			if(op_code == FRAME_ACCESS){
 				frame = recv_int(socket_memoria);
@@ -408,7 +411,7 @@ void replace_tlb_input(int pid, int segment_num, int page_num, int frame){
 
 void request_data_in(int frame, int page_offset, t_pcb* pcb, t_register reg1){
 	send_read_request(socket_memoria, pcb, frame, page_offset);
-    recv_buffer_size(socket);
+    recv_buffer_size(socket_memoria);
 	recv_and_validate_op_code_is(socket_memoria, RAM_ACCESS_READ);
 	pcb->registers[reg1] = recv_int(socket_memoria);
 	pcb->program_counter++;
@@ -417,7 +420,7 @@ void request_data_in(int frame, int page_offset, t_pcb* pcb, t_register reg1){
 
 void request_data_out(int frame, int page_offset, t_pcb* pcb, t_register reg1){
 	send_write_request(socket_memoria, pcb, frame, page_offset, pcb->registers[reg1]);
-    recv_buffer_size(socket);
+    recv_buffer_size(socket_memoria);
 	recv_and_validate_op_code_is(socket_memoria, RAM_ACCESS_WRITE);
 	pcb->program_counter++;
 }
@@ -436,6 +439,7 @@ void* consistency_check(void* arg) {
 	// FUNCION PARA THREAD
 	int frame_swapped;
 	while(true){
+		recv_buffer_size(socket_memoria_tlb);
 		frame_swapped = recv_tlb_consistency_check(socket_memoria_tlb);
 		// Bloqueo
 		log_trace(logger, "Voy a bloquear");

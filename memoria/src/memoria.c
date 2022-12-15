@@ -75,7 +75,7 @@ int main(int argc, char **argv)
 
 void initialize_logger(char **argv)
 {
-	logger = log_create("memoria.log", "memoria", true, LOG_LEVEL_TRACE);
+	logger = log_create("memoria.log", "memoria", true, LOG_LEVEL_INFO);
 }
 
 void initialize_sockets()

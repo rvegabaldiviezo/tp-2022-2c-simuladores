@@ -61,6 +61,7 @@ int main(int argc, char **argv)
 		log_trace(logger, "Esperando consola...");
 		int socket_consola = accept(socket_kernel, NULL, NULL);
 		log_trace(logger, "Conexion con consola: %i", socket_consola);
+    	recv_buffer_size(socket_consola);
 		t_list* instructions = recv_instructions(socket_consola);
 		t_list* segments = recv_segments(socket_consola);
 		create_process(socket_consola, instructions, segments);
@@ -69,7 +70,7 @@ int main(int argc, char **argv)
 
 void initialize_logger(char **argv)
 {
-	logger = log_create("kernel.log", "kernel", true, LOG_LEVEL_TRACE);
+	logger = log_create("kernel.log", "kernel", true, LOG_LEVEL_INFO);
 }
 
 void initialize_config(char **argv)
@@ -120,7 +121,7 @@ void create_process(int socket_consola, t_list* instructions, t_list* segments)
 	pcb->registers[CX] = 0;
 	pcb->registers[DX] = 0;
 	send_process_started(socket_memoria, pcb->id, segments);
-    recv_buffer_size(socket);
+    recv_buffer_size(socket_memoria);
 	recv_and_validate_op_code_is(socket_memoria, PROCESS_STARTED);
 	pcb->segment_table = recv_segment_table(socket_memoria);
 

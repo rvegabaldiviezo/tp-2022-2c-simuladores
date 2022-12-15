@@ -68,17 +68,17 @@ void add_string(t_buffer* buffer, char* string)
     // Agrego el codigo de operacion
     add_op_code(buffer, STRING);
 
-    log_debug(logger, "Agrego op_code STRING %i | %i", STRING, buffer->size);
+    //log_debug(logger, "Agrego op_code STRING %i | %i", STRING, buffer->size);
 
     int length = string_length(string) + 1;
 
     add_to_buffer(buffer, &length, sizeof(int));
 
-    log_debug(logger, "Agrego length %i | %i", length, buffer->size);
+    //log_debug(logger, "Agrego length %i | %i", length, buffer->size);
 
     add_to_buffer(buffer, string, sizeof(char) * length);
 
-    log_debug(logger, "Agrego string %s | %i", string, buffer->size);
+    //log_debug(logger, "Agrego string %s | %i", string, buffer->size);
 }
 void add_instructions(t_buffer* buffer, t_list* instructions)
 {
@@ -89,7 +89,7 @@ void add_instructions(t_buffer* buffer, t_list* instructions)
     // Agrego un numero que representa cuantas instrucciones se mandan
     add_to_buffer(buffer, &instructions_count, sizeof(int));
 
-    log_debug(logger, "Envio %i instrucciones", instructions_count);
+    //log_debug(logger, "Envio %i instrucciones", instructions_count);
 
     for(int i = 0; i < instructions_count; i++)
     {
@@ -169,6 +169,7 @@ void send_buffer(int socket, t_buffer* buffer)
 }
 int recv_buffer_size(int socket)
 {
+    //log_trace(logger, "Esperando recibir buffer_size");
     int buffer_size;
     recv(socket, &buffer_size, sizeof(int), 0);
     log_debug(logger, "Recibo buffer %i", buffer_size);
@@ -191,22 +192,17 @@ void send_string(int socket, char* string)
 // cuando no se use
 char* recv_string(int socket)
 {
-    op_code op_code = recv_op_code(socket);
-    log_debug(logger, "op_code: %i", op_code);
-
-    if(op_code != STRING) {
-        log_error(logger, "op_code: %i", op_code);
-    }
+    recv_and_validate_op_code_is(socket, STRING);
 
     int length;
     recv(socket, &length, sizeof(int), 0);
 
-    log_debug(logger, "Recibo length %i", length);
+    //log_debug(logger, "Recibo length %i", length);
 
     char* string = malloc(sizeof(char) * length);
     recv(socket, string, sizeof(char) * length, 0);
 
-    log_debug(logger, "Recibo string %s", string);
+    //log_debug(logger, "Recibo string %s", string);
 
     return string;
 }
@@ -221,7 +217,6 @@ void send_instructions(int socket, t_list* instructions)
 // Recibe las instrucciones
 t_list* recv_instructions(int socket)
 {
-    recv_buffer_size(socket);
     recv_and_validate_op_code_is(socket, INSTRUCTIONS);
 
     t_list* instructions = list_create();
@@ -269,7 +264,7 @@ t_list* recv_instructions(int socket)
             list_add(instruction->parameters, (void*)parameter);
         }
         list_add(instructions, (void*)instruction);
-        usleep(50);
+        usleep(100);
     }
     
     return instructions;
@@ -282,7 +277,7 @@ void send_pcb_io(int socket, t_pcb* pcb, char* device, int arg)
 {
     t_buffer* buffer = create_buffer();
 
-    log_debug(logger, "Se envia PCB por IO | Device: %s | Arg: %i", device, arg);
+    //log_debug(logger, "Se envia PCB por IO | Device: %s | Arg: %i", device, arg);
 
     add_op_code(buffer, PCB);
     add_to_buffer(buffer, &pcb->id, sizeof(pcb->id));
@@ -294,8 +289,6 @@ void send_pcb_io(int socket, t_pcb* pcb, char* device, int arg)
     add_instructions(buffer, pcb->instructions);
     add_string(buffer, device);
     add_to_buffer(buffer, &arg, sizeof(arg));
-
-    log_debug(logger, "Tamanio buffer: %i", buffer->size);
 
     send_buffer(socket, buffer);
     destroy_buffer(buffer);
@@ -337,7 +330,6 @@ void send_pcb(int socket, t_pcb* pcb)
 }
 t_pcb* recv_pcb(int socket)
 {
-    recv_buffer_size(socket);
     log_debug(logger, "Quiero recibir pcb");
     recv_and_validate_op_code_is(socket, PCB);
 

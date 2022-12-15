@@ -35,6 +35,7 @@ void* handle_cpu(void* arg)
 
 	while(true)
 	{
+        recv_buffer_size(socket_cpu);
 		op_code op_code = recv_op_code(socket_cpu);
 
 		switch (op_code)

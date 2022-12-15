@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
 	char* consola_config_path = argv[1];
 	char* program_path = argv[2];
 
-	logger = log_create("consola.log", "consola", true, LOG_LEVEL_TRACE);
+	logger = log_create("consola.log", "consola", true, LOG_LEVEL_INFO);
 	// Obtengo la config de consola
 	consola_config = config_create(consola_config_path);
 
@@ -75,6 +75,7 @@ int main(int argc, char **argv) {
 	// Ciclo de espera con el Kernel
 	while(true) {
 		log_trace(logger, "Espero al Kernel...");
+		recv_buffer_size(socket_kernel);
 		op_code op = recv_op_code(socket_kernel);
 
 		switch (op)
