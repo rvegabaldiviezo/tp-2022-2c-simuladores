@@ -68,10 +68,17 @@ void add_string(t_buffer* buffer, char* string)
     // Agrego el codigo de operacion
     add_op_code(buffer, STRING);
 
+    log_debug(logger, "Agrego op_code STRING %i | %i", STRING, buffer->size);
+
     int length = string_length(string) + 1;
 
     add_to_buffer(buffer, &length, sizeof(int));
+
+    log_debug(logger, "Agrego length %i | %i", length, buffer->size);
+
     add_to_buffer(buffer, string, sizeof(char) * length);
+
+    log_debug(logger, "Agrego string %s | %i", string, buffer->size);
 }
 void add_instructions(t_buffer* buffer, t_list* instructions)
 {
@@ -81,6 +88,8 @@ void add_instructions(t_buffer* buffer, t_list* instructions)
     int instructions_count = list_size(instructions);
     // Agrego un numero que representa cuantas instrucciones se mandan
     add_to_buffer(buffer, &instructions_count, sizeof(int));
+
+    log_debug(logger, "Envio %i instrucciones", instructions_count);
 
     for(int i = 0; i < instructions_count; i++)
     {
@@ -111,6 +120,7 @@ void add_instructions(t_buffer* buffer, t_list* instructions)
                 add_to_buffer(buffer, &param->parameter, sizeof(int));
             }
         }
+        //usleep(30);
     }
 }
 add_segment_table(t_buffer* buffer, t_list* segments)
@@ -147,7 +157,22 @@ void add_pcb(t_buffer* buffer, t_pcb* pcb)
 
 void send_buffer(int socket, t_buffer* buffer)
 {
-    send(socket, buffer->stream, buffer->size, 0);
+    void* magic = malloc(sizeof(int) + buffer->size);
+
+    memcpy(magic, &buffer->size, sizeof(int));
+    memcpy(magic + sizeof(int), buffer->stream, buffer->size);
+
+    send(socket, magic, sizeof(int) + buffer->size, 0);
+    log_debug(logger, "Envio buffer %i", buffer->size);
+
+    free(magic);
+}
+int recv_buffer_size(int socket)
+{
+    int buffer_size;
+    recv(socket, &buffer_size, sizeof(int), 0);
+    log_debug(logger, "Recibo buffer %i", buffer_size);
+    return buffer_size;
 }
 /*
  * ------------------------------------------------
@@ -166,13 +191,22 @@ void send_string(int socket, char* string)
 // cuando no se use
 char* recv_string(int socket)
 {
-    recv_and_validate_op_code_is(socket, STRING);
+    op_code op_code = recv_op_code(socket);
+    log_debug(logger, "op_code: %i", op_code);
+
+    if(op_code != STRING) {
+        log_error(logger, "op_code: %i", op_code);
+    }
 
     int length;
     recv(socket, &length, sizeof(int), 0);
 
+    log_debug(logger, "Recibo length %i", length);
+
     char* string = malloc(sizeof(char) * length);
     recv(socket, string, sizeof(char) * length, 0);
+
+    log_debug(logger, "Recibo string %s", string);
 
     return string;
 }
@@ -187,6 +221,7 @@ void send_instructions(int socket, t_list* instructions)
 // Recibe las instrucciones
 t_list* recv_instructions(int socket)
 {
+    recv_buffer_size(socket);
     recv_and_validate_op_code_is(socket, INSTRUCTIONS);
 
     t_list* instructions = list_create();
@@ -196,6 +231,8 @@ t_list* recv_instructions(int socket)
     // Ahora recibo cuantas instrucciones se mandaron
     int instructions_count;
     recv(socket, &instructions_count, sizeof(int), 0);
+
+    log_debug(logger, "Recibo %i instrucciones", instructions_count);
 
     for(int i = 0; i < instructions_count; i++)
     {
@@ -232,6 +269,7 @@ t_list* recv_instructions(int socket)
             list_add(instruction->parameters, (void*)parameter);
         }
         list_add(instructions, (void*)instruction);
+        usleep(50);
     }
     
     return instructions;
@@ -244,6 +282,8 @@ void send_pcb_io(int socket, t_pcb* pcb, char* device, int arg)
 {
     t_buffer* buffer = create_buffer();
 
+    log_debug(logger, "Se envia PCB por IO | Device: %s | Arg: %i", device, arg);
+
     add_op_code(buffer, PCB);
     add_to_buffer(buffer, &pcb->id, sizeof(pcb->id));
     add_to_buffer(buffer, &pcb->interrupt_type, sizeof(pcb->interrupt_type));
@@ -254,6 +294,8 @@ void send_pcb_io(int socket, t_pcb* pcb, char* device, int arg)
     add_instructions(buffer, pcb->instructions);
     add_string(buffer, device);
     add_to_buffer(buffer, &arg, sizeof(arg));
+
+    log_debug(logger, "Tamanio buffer: %i", buffer->size);
 
     send_buffer(socket, buffer);
     destroy_buffer(buffer);
@@ -295,6 +337,8 @@ void send_pcb(int socket, t_pcb* pcb)
 }
 t_pcb* recv_pcb(int socket)
 {
+    recv_buffer_size(socket);
+    log_debug(logger, "Quiero recibir pcb");
     recv_and_validate_op_code_is(socket, PCB);
 
     t_pcb* pcb = malloc(sizeof(t_pcb));
@@ -387,6 +431,7 @@ void send_segments(int socket, t_list* segments)
 }
 t_list* recv_segments(int socket)
 {
+    recv_buffer_size(socket);
     recv_and_validate_op_code_is(socket, SEGMENTS);
 
     int segments_count = recv_int(socket);
@@ -628,27 +673,37 @@ int recv_tlb_consistency_check(int socket)
 
 void free_pcb(t_pcb* pcb)
 {
+    log_debug(logger, "Comienzo free de pcb");
     list_destroy_and_destroy_elements(pcb->instructions, free_instruction);
     list_destroy_and_destroy_elements(pcb->segment_table, free_segment);
     free(pcb);
+    log_debug(logger, "Free de pcb finalizado");
 }
 
 void free_instruction(t_instruction* instruction)
 {
+    //log_debug(logger, "Comienzo free de instruction");
     list_destroy_and_destroy_elements(instruction->parameters, free_parameter);
     free(instruction);
+    //log_debug(logger, "Free de instruction finalizado");
 }
 
 void free_segment(t_segment* segment)
 {
+    //log_debug(logger, "Comienzo free de segment");
     free(segment);
+    //log_debug(logger, "Free de segment finalizado");
 }
 
 void free_parameter(t_parameter* parameter)
 {
+    //log_debug(logger, "Comienzo free de parameter");
     if(parameter->is_string) {
+        //log_debug(logger, "Comienzo free de string");
         free(parameter->parameter);
+        //log_debug(logger, "Free de string finalizado");
     }
     free(parameter);
+    //log_debug(logger, "Free de parameter finalizado");
 }
 

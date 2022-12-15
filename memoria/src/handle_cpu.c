@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <time.h>
+#include <stdlib.h>
 #include <commons/log.h>
 #include <commons/string.h>
 #include <commons/collections/list.h>
@@ -49,6 +50,10 @@ void* handle_cpu(void* arg)
 		case FRAME_ACCESS:
 			frame_access();
 			break;
+
+		default:
+			log_error(logger, "op_code invalido para Handle Memoria, se recibio %i", op_code);
+			exit(EXIT_FAILURE);
 		}
 		
 	}
@@ -84,6 +89,12 @@ void ram_access_write()
 	int frame = recv_int(socket_cpu);
 	int offset = recv_int(socket_cpu);
 	int value = recv_int(socket_cpu);
+
+	log_debug(logger, "Recibi PCB");
+	log_pcb(logger, pcb);
+	log_debug(logger, "Recibi frame: %i", frame);
+	log_debug(logger, "Recibi offset: %i", offset);
+	log_debug(logger, "Recibi value: %i", value);
 
 	usleep(memoria_config->memory_delay * 1000);
 

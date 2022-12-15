@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
 	char* consola_config_path = argv[1];
 	char* program_path = argv[2];
 
-	logger = log_create("consola.log", "consola", true, LOG_LEVEL_INFO);
+	logger = log_create("consola.log", "consola", true, LOG_LEVEL_TRACE);
 	// Obtengo la config de consola
 	consola_config = config_create(consola_config_path);
 

@@ -1,6 +1,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <pthread.h>
+#include <stdlib.h>
 #include <time.h>
 #include <stdio.h>
 #include <commons/log.h>
@@ -50,6 +51,9 @@ void handle_kernel()
         case PAGE_FAULT:
             resolve_page_fault();
             break;
+        default:
+			log_error(logger, "op_code invalido para Handle Kernel, se recibio %i", op_code);
+			exit(EXIT_FAILURE);
         }
     }
 }

@@ -229,6 +229,7 @@ void* handle_page_fault(void* arg)
     while(true)
     {
         // Esperamos que memoria envie un page fault resuelto
+        recv_buffer_size(socket);
         recv_and_validate_op_code_is(socket_memoria_page_fault, PAGE_FAULT_RESOLVED);
         t_pcb* pcb = recv_pcb(socket_memoria_page_fault);
         // Enviamos el proceso a READY
@@ -248,6 +249,7 @@ void* handle_pantalla(void* arg)
     // Aviso a consola que muestre algo por pantalla
     send_pantalla(pcb->socket_consola, pcb->registers[reg]);
     // Espero a que la consola me confirme que llego una pantalla
+    recv_buffer_size(socket);
     recv_and_validate_op_code_is(pcb->socket_consola, PANTALLA);
     log_debug(logger, "PID: %i - Recibi de consola N°%i confirmacion que se mostro el %i por PANTALLA", pcb->id, pcb->socket_consola, pcb->registers[reg]);
     // Desbloqueamos el proceso
@@ -265,6 +267,7 @@ void* handle_teclado(void* arg)
     log_debug(logger, "PID: %i - Envio a consola N°%i a que escriba un valor por TECLADO", pcb->id, pcb->socket_consola);
     send_teclado(pcb->socket_consola);
     // Me aseguro que la consola haya devuelto una respuesta por TECLADO
+    recv_buffer_size(socket);
     recv_and_validate_op_code_is(pcb->socket_consola, TECLADO);
     // Recivo el valor del teclado
     int value = recv_int(pcb->socket_consola);
@@ -354,6 +357,8 @@ void wait_cpu_dispatch()
     {
         // Se espera a recibir el pcb de la cpu porque termino de ejecutar
         t_pcb* pcb = recv_pcb(socket_cpu_dispatch);
+        log_debug(logger, "Recibi PCB");
+        log_pcb(logger, pcb);
         // Ya no hace falta el fin de quantum
         if(scheduling_algorithm != FIFO) {
             if(pthread_cancel(thread_interrupt) == 0) {
@@ -368,6 +373,7 @@ void wait_cpu_dispatch()
                 // avisamos a la memoria a que libere los datos del proceso
                 log_trace(logger, "segment_table: %i", list_size(pcb->segment_table));
                 send_process_finished(socket_memoria, pcb);
+                recv_buffer_size(socket);
                 recv_and_validate_op_code_is(socket_memoria, PROCESS_FINISHED);
                 // avisamos a la consola de que se finalizo el proceso
                 send_exit(pcb->socket_consola);
@@ -410,7 +416,10 @@ void wait_cpu_dispatch()
                 log_debug(logger, "Ocurrio un SEGMENTATION_FAULT");
                 send_segmentation_fault(pcb->socket_consola);
                 free_pcb(pcb);
+                break;
             default:
+                log_error(logger, "Tipo de interrupcion invalido, se recibio %i", pcb->interrupt_type);
+                exit(EXIT_FAILURE);
                 break;
         }
         execute_algorithm();

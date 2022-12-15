@@ -69,7 +69,7 @@ int main(int argc, char **argv)
 
 void initialize_logger(char **argv)
 {
-	logger = log_create("kernel.log", "kernel", true, LOG_LEVEL_INFO);
+	logger = log_create("kernel.log", "kernel", true, LOG_LEVEL_TRACE);
 }
 
 void initialize_config(char **argv)
@@ -120,6 +120,7 @@ void create_process(int socket_consola, t_list* instructions, t_list* segments)
 	pcb->registers[CX] = 0;
 	pcb->registers[DX] = 0;
 	send_process_started(socket_memoria, pcb->id, segments);
+    recv_buffer_size(socket);
 	recv_and_validate_op_code_is(socket_memoria, PROCESS_STARTED);
 	pcb->segment_table = recv_segment_table(socket_memoria);
 

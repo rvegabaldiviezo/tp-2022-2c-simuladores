@@ -29,6 +29,8 @@ typedef struct {
 op_code recv_and_validate_op_code_is(int socket, op_code op_code_expected);
 op_code recv_op_code(int socket);
 
+int recv_buffer_size(int socket);
+
 int recv_int(int socket);
 
 void send_string(int socket, char* string);
