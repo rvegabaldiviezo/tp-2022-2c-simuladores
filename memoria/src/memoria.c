@@ -49,6 +49,8 @@ void* ram;
 FILE* swap;
 t_list* page_tables;
 t_list* frames_usage; // Frames usados 0 -> libre, 1 -> ocupado
+t_list* last_page_table_reference;
+int time;
 
 // Mutex
 pthread_mutex_t ram_mutex;
@@ -143,6 +145,8 @@ void initialize_memory_structures()
 	ftruncate(memoria_config->path_swap, sizeof(int) * memoria_config->swap_size);
 	log_trace(logger, "Se modifico el tamaño del archivo swap");
 	page_tables = list_create();
+	time = 0;
+	last_page_table_reference = list_create();
 
 	int frames_count = memoria_config->frames_per_process;
 	frames_usage = list_create();

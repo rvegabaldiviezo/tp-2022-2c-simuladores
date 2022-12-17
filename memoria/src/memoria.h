@@ -18,12 +18,21 @@ typedef struct
 
 typedef struct
 {
+	int pid;
 	int frame;
 	int P;
 	int U;
 	int M;
 	int swap_pos;
+	int timestamp;
 } t_page_table_data;
+
+typedef struct
+{
+	int last_page_table;
+	int last_page;
+} t_last_page_table_data;
+
 
 
 void initialize_logger(argv);
