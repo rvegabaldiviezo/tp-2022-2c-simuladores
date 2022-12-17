@@ -268,9 +268,10 @@ t_page_table_data* find_victim(t_pcb* pcb, int segment, int page)
     {
         log_trace(logger, "Buscando victima... iteracion: %i", o);
 
-        for(int i = page_table_pointer; i < list_size(page_tables); i++)
+        for(int i = page_table_pointer; i < list_size(pcb->segment_table); i++)
         {
-            t_list* page_table = list_get(page_tables, i);
+            t_segment* segment_data = list_get(pcb->segment_table, i);
+            t_list* page_table = list_get(page_tables, segment_data->page_table_index)
             //log_trace(logger, "Buscando en Segmento: %i", i);
 
             for(int j = page_pointer; j < list_size(page_table); j++)
@@ -290,7 +291,7 @@ t_page_table_data* find_victim(t_pcb* pcb, int segment, int page)
                 page_pointer = (page_pointer + 1) % list_size(page_table);
             }
             // Puntero de la tabla de paginas
-            page_table_pointer = (page_table_pointer + 1) % list_size(page_tables);
+            page_table_pointer = (page_table_pointer + 1) % list_size(pcb->segment_table);
         }
     }
 }
