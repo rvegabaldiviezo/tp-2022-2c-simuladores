@@ -271,7 +271,7 @@ t_page_table_data* find_victim(t_pcb* pcb, int segment, int page)
         for(int i = page_table_pointer; i < list_size(pcb->segment_table); i++)
         {
             t_segment* segment_data = list_get(pcb->segment_table, i);
-            t_list* page_table = list_get(page_tables, segment_data->page_table_index)
+            t_list* page_table = list_get(page_tables, segment_data->page_table_index);
             //log_trace(logger, "Buscando en Segmento: %i", i);
 
             for(int j = page_pointer; j < list_size(page_table); j++)
