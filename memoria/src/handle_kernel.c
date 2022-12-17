@@ -26,7 +26,7 @@ extern FILE* swap;
 extern t_list* page_tables;
 extern t_list* frames_usage;
 extern t_list* last_page_table_reference;
-extern int time;
+extern int global_time;
 
 // Mutex
 extern pthread_mutex_t ram_mutex;
@@ -269,7 +269,7 @@ int find_free_frame(t_pcb* pcb, int segment, int page)
     }
 
     t_page_table_data* page_data = get_page_reverse(pcb, frame);
-    page_data->timestamp = time++;
+    page_data->timestamp = global_time++;
 
     return frame;
 }
@@ -287,7 +287,7 @@ t_page_table_data* find_victim(t_pcb* pcb, int segment, int page)
 
         for(int i = last_page_table_data->last_page_table; i < list_size(page_tables); i++)
         {
-            t_list* page_table = list_get(page_tables);
+            t_list* page_table = list_get(page_tables, i);
             //log_trace(logger, "Buscando en Segmento: %i", i);
 
             for(int j = last_page_table_data->last_page; j < list_size(page_table) - 1; j++)
@@ -320,9 +320,7 @@ t_page_table_data* find_victim(t_pcb* pcb, int segment, int page)
         if(is_victim(page_data, o))
         {
             log_debug(logger, "Se encontro victima!");
-            log_info(logger, "REEMPLAZO - PID: %i - Marco: %i - Page Out: %i|%i - Page In: %i|%i", pcb->id, page_data->frame, i, j, segment, page);
-            log_trace(logger, "page_pointer: %i", page_pointer);
-            log_trace(logger, "page_table_pointer: %i", page_table_pointer);
+            log_info(logger, "REEMPLAZO - PID: %i - Marco: %i - Page Out: %i|%i - Page In: %i|%i", pcb->id, page_data->frame, page_tables_index, page_index, segment, page);
             return page_data;
         }
     }
@@ -330,7 +328,7 @@ t_page_table_data* find_victim(t_pcb* pcb, int segment, int page)
 
 bool is_victim(t_page_table_data* page, int iteration)
 {
-    page->timestamp = time++;
+    page->timestamp = global_time++;
     if(strcmp(memoria_config->replace_algorithm, "CLOCK-M") == 0)
     {
         if(page->P == 0)
