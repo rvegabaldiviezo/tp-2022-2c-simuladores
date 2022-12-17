@@ -25,7 +25,7 @@ extern void* ram;
 extern FILE* swap;
 extern t_list* page_tables;
 extern t_list* frames_usage;
-extern t_list* last_page_table_reference;
+extern t_dictionary* last_page_table_reference;
 extern int global_time;
 
 // Mutex
@@ -100,7 +100,7 @@ void process_started()
             last_page_table_data->last_page = 0;
             last_page_table_data->last_page_table = 0;
 
-            list_add_in_index(last_page_table_reference, pid, last_page_table_data);
+            dictionary_put(last_page_table_reference, itoa(pid), last_page_table_data);
         }
 
         // Guardamos la tabla de pagina en nuestra lista de tablas de paginas
@@ -283,7 +283,7 @@ t_page_table_data* find_victim(t_pcb* pcb, int segment, int page)
         int page_index = 0;
         log_trace(logger, "Buscando victima... iteracion: %i", o);
             
-        t_last_page_table_data* last_page_table_data = list_get(last_page_table_reference, pcb->id);
+        t_last_page_table_data* last_page_table_data = dictionary_get(last_page_table_reference, itoa(pcb->id));
 
         for(int i = last_page_table_data->last_page_table; i < list_size(page_tables); i++)
         {
