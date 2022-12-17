@@ -314,7 +314,7 @@ t_page_table_data* find_victim(t_pcb* pcb, int segment, int page)
             last_page_table_data->last_page_table = (last_page_table_data->last_page_table + 1) % list_size(page_tables);
         }
         
-        t_list* page_table = list_get(page_tables_index);
+        t_list* page_table = list_get(page_tables, page_tables_index);
         t_page_table_data* page_data = list_get(page_table, page_index);
 
         if(is_victim(page_data, o))
